@@ -1,0 +1,201 @@
+###############################
+# DEFAULT 
+###############################
+enabled: true
+developer: false
+grpc: true
+scheduler: false
+worker: false
+rest: false
+name: inventory-v2
+image:
+  name: spaceone/inventory-v2
+  version: latest
+imagePullPolicy: IfNotPresent
+
+resources: {}
+#     grpc: 
+#         requests:
+#             memory: "128Mi"
+#             cpu: "25m"
+#         limits:
+#             memory: "256Mi"
+#             cpu: "50m"
+#     rest: 
+#         requests:
+#             memory: "128Mi"
+#             cpu: "25m"
+#         limits:
+#             memory: "256Mi"
+#             cpu: "50m"
+#     scheduler: 
+#         requests:
+#             memory: "128Mi"
+#             cpu: "25m"
+#         limits:
+#             memory: "256Mi"
+#             cpu: "50m"
+#     worker: 
+#         requests:
+#             memory: "128Mi"
+#             cpu: "25m"
+#         limits:
+#             memory: "256Mi"
+#             cpu: "50m"
+
+database: {}
+
+###########################################################
+# if you want to use API key or spacectl
+# Put full FQDN at endpoint
+# Ex) endpoint: grpc://inventory_v2.example.com:50051
+# grpc is for gRPC ALB ingress controller
+# If you want to use NLB instead of ALB, 
+# You have to use grpc://inventory_v2.example.com:50051/v1
+###########################################################
+application_grpc:
+  ENDPOINTS:
+    - service: identity
+      name: Identity Service
+      endpoint: grpc://identity:50051
+    - service: inventory
+      name: Inventory Service
+      endpoint: grpc://inventory:50051
+    - service: inventory_v2
+      name: Inventory V2 Service
+      endpoint: grpc://inventory-v2:50051
+    - service: cost_analysis
+      name: Cost Analysis Service
+      endpoint: grpc://cost_analysis:50051
+    - service: dashboard
+      name: Dashboard Service
+      endpoint: grpc://cost:50051
+    - service: repository
+      name: Repository Service
+      endpoint: grpc://repository:50051
+    - service: board
+      name: Board Service
+      endpoint: grpc://board:50051
+    - service: secret
+      name: Secret Manager
+      endpoint: grpc://secret:50051
+    - service: config
+      name: Config Service
+      endpoint: grpc://config:50051
+    - service: file_manager
+      name: File Manager
+      endpoint: grpc://file-manager:50051
+    - service: plugin
+      name: Plugin Manager
+      endpoint: grpc://plugin:50051
+    - service: search
+      name: Search Service
+      endpoint: grpc://search:50051
+
+application_rest: {}
+
+# Overwrite scheduler config
+application_scheduler:
+  SCHEDULERS: {}
+
+# Overwrite worker config
+application_worker:
+  QUEUES: {}
+  WORKERS: {}
+
+##########################
+# local sidecar
+##########################
+sidecar:
+  rest_web:
+    image:
+      name: nginx
+      version: stable
+      imagePullPolicy: IfNotPresent
+    resources: {}
+    #     requests:
+    #         memory: "128Mi"
+    #         cpu: "25m"
+    #     limits:
+    #         memory: "256Mi"
+    #         cpu: "50m"
+  grpc: {}
+  rest: {}
+  scheduler: {}
+  worker: {}
+
+##########################
+# Local volumes
+##########################
+volumes:
+  - name: timezone
+    hostPath:
+      path: /usr/share/zoneinfo/Asia/Seoul
+  - name: log-volume
+    emptyDir: {}
+
+#######################
+# global variable
+#######################
+global:
+  shared: {}
+  backend:
+    sidecar: []
+    #        - name: mongos
+    #          image: mongo:4.4.0-bionic
+    #          command: [ 'mongos', '--config', '/mnt/mongos.yml', '--bind_ip_all' ]
+    #          volumeMounts:
+    #            - name: mongos-conf
+    #              mountPath: /mnt/mongos.yml
+    #              subPath: mongos.yml
+    #              readOnly: true
+    #            - name: mongo-shard-key
+    #              mountPath: /opt/mongos/mongo-shard.pem
+    #              subPath: mongo-shard.pem
+    #              readOnly: true
+    #
+    volumes: []
+  #        - name: mongo-shard-key
+  #          secret:
+  #              defaultMode: 0400
+  #              secretName: mongo-shard-key
+  #        - name: mongos-conf
+  #          configMap:
+  #              name: mongos-conf
+  #        - name: shared-conf
+  #          configMap:
+  #              name: shared-conf
+
+# Service
+service:
+  grpc:
+    type: ClusterIP
+    annotations:
+      nil: nil
+    ports:
+      - name: grpc
+        port: 50051
+        targetPort: 50051
+        protocol: TCP
+
+################################
+# volumeMount per deployment
+################################
+volumeMounts:
+  application_grpc: []
+  application_rest: []
+  application_scheduler: []
+  application_worker: []
+
+
+####################################
+# pod spec (append more pod spec)
+# example nodeSelect
+#
+# pod:
+#   spec:
+#     nodeSelector:
+#       application: my-node-group
+####################################
+pod:
+  spec: {}

@@ -1,0 +1,1 @@
+from spaceone.inventory_v2.service.region_service import RegionService

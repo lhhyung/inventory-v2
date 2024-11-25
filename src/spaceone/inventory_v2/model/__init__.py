@@ -1,0 +1,1 @@
+from spaceone.inventory_v2.model.region_model import Region

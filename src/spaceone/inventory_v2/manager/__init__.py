@@ -1,0 +1,1 @@
+from spaceone.inventory_v2.manager.region_manager import RegionManager

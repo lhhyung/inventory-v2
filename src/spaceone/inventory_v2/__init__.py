@@ -1,0 +1,1 @@
+name = 'inventory_v2'

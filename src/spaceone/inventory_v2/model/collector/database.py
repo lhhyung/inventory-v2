@@ -47,7 +47,6 @@ class Collector(MongoModel):
     collector_id = StringField(max_length=40, generate_id="collector", unique=True)
     name = StringField(max_length=255)
     provider = StringField(max_length=40, default=None, null=True)
-    capability = DictField()
     plugin_info = EmbeddedDocumentField(PluginInfo, default=None, null=True)
     schedule = EmbeddedDocumentField(Scheduled, default=None, null=False)
     secret_filter = EmbeddedDocumentField(SecretFilter, default=None, null=True)
@@ -72,7 +71,6 @@ class Collector(MongoModel):
             "collector_id",
             "name",
             "provider",
-            "capability",
             "plugin_info",
             "resource_group",
         ],

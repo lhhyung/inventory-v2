@@ -4,7 +4,7 @@ from typing import Tuple
 from spaceone.core.model.mongo_model import QuerySet
 from spaceone.core.manager import BaseManager
 from spaceone.inventory_v2.lib.resource_manager import ResourceManager
-from spaceone.inventory_v2.model.region_model import Region
+from spaceone.inventory_v2.model.region.region_model import Region
 
 _LOGGER = logging.getLogger(__name__)
 

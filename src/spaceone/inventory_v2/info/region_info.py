@@ -3,11 +3,12 @@ import logging
 from spaceone.api.inventory.v2 import region_pb2
 from spaceone.core.pygrpc.message_type import *
 from spaceone.core import utils
-from spaceone.inventory_v2.model.region_model import Region
+from spaceone.inventory_v2.model.region.region_model import Region
 
 __all__ = ["RegionInfo", "RegionsInfo"]
 
 _LOGGER = logging.getLogger(__name__)
+
 
 def RegionInfo(region_vo: Region, minimal=False):
     info = {

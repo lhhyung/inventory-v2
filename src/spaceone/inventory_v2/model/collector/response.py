@@ -16,7 +16,6 @@ class CollectorResponse(BaseModel):
     collector_id: Union[str, None] = None
     name: Union[str, None] = None
     provider: Union[str, None] = None
-    capability: Union[dict, None] = None
     secret_filter: Union[dict, None] = None
     plugin_info: Union[dict, None] = None
     schedule: Union[dict, None] = None
@@ -32,7 +31,9 @@ class CollectorResponse(BaseModel):
         data = super().dict(*args, **kwargs)
         data["created_at"] = utils.datetime_to_iso8601(data["created_at"])
         data["updated_at"] = utils.datetime_to_iso8601(data["updated_at"])
-        data["last_collected_at"] = utils.datetime_to_iso8601(data.get("last_collected_at"))
+        data["last_collected_at"] = utils.datetime_to_iso8601(
+            data.get("last_collected_at")
+        )
         return data
 
 

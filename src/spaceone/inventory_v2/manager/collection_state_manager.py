@@ -16,7 +16,7 @@ class CollectionStateManager(BaseManager):
         self.secret_id = self.transaction.get_meta("secret.secret_id")
         self.collection_state_model = CollectionState
 
-    def create_collection_state(self, cloud_service_id: str, domain_id: str) -> None:
+    def create_collection_state(self, asset_id: str, domain_id: str) -> None:
         def _rollback(vo: CollectionState):
             _LOGGER.info(
                 f"[ROLLBACK] Delete collection state: cloud_service_id = {vo.cloud_service_id}, "
@@ -29,7 +29,7 @@ class CollectionStateManager(BaseManager):
                 "collector_id": self.collector_id,
                 "job_task_id": self.job_task_id,
                 "secret_id": self.secret_id,
-                "cloud_service_id": cloud_service_id,
+                "asset_id": asset_id,
                 "domain_id": domain_id,
             }
 

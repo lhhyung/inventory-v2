@@ -10,7 +10,7 @@ __all__ = [
     "CollectorGetRequest",
     "CollectorSearchQueryRequest",
     "CollectorStatQueryRequest",
-    "CollectorCollectRequest"
+    "CollectorCollectRequest",
 ]
 
 ScheduleState = Literal["ENABLED", "DISABLED"]
@@ -20,9 +20,9 @@ UpgradeMode = Literal["AUTO", "MANUAL"]
 
 class CollectorCreateRequest(BaseModel):
     name: str
-    plugin_info: dict
-    schedule: dict
     provider: Union[str, None] = None
+    plugin_info: dict
+    schedule: Union[dict, None] = None
     secret_filter: Union[dict, None] = None
     tags: Union[dict, None] = None
     resource_group: ResourceGroup

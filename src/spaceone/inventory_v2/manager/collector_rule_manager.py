@@ -75,57 +75,55 @@ class CollectorRuleManager(BaseManager):
     def stat_collector_rules(self, query: dict) -> dict:
         return self.collector_rule_model.stat(**query)
 
-    def change_cloud_service_data(
-        self, collector_id: str, domain_id: str, cloud_service_data: dict
+    def change_asset_data(
+        self, collector_id: str, domain_id: str, asset_data: dict
     ) -> dict:
         (
             managed_collector_rule_vos,
             custom_collector_rule_vos,
         ) = self._get_collector_rules(collector_id, domain_id)
 
-        cloud_service_data = self._apply_collector_rule_to_cloud_service_data(
-            cloud_service_data, managed_collector_rule_vos, domain_id
+        cloud_service_data = self._apply_collector_rule_to_asset_data(
+            asset_data, managed_collector_rule_vos, domain_id
         )
 
-        cloud_service_data = self._apply_collector_rule_to_cloud_service_data(
+        cloud_service_data = self._apply_collector_rule_to_asset_data(
             cloud_service_data, custom_collector_rule_vos, domain_id
         )
 
         return cloud_service_data
 
-    def _apply_collector_rule_to_cloud_service_data(
-        self, cloud_service_data: dict, collector_rule_vos: QuerySet, domain_id: str
+    def _apply_collector_rule_to_asset_data(
+        self, asset_data: dict, collector_rule_vos: QuerySet, domain_id: str
     ) -> dict:
         for collector_rule_vo in collector_rule_vos:
-            is_match = self._change_cloud_service_data_by_rule(
-                cloud_service_data, collector_rule_vo
-            )
+            is_match = self._change_asset_data_by_rule(asset_data, collector_rule_vo)
 
             if is_match:
-                cloud_service_data = self._change_cloud_service_data_with_actions(
-                    cloud_service_data, collector_rule_vo.actions, domain_id
+                asset_data = self._change_asset_data_with_actions(
+                    asset_data, collector_rule_vo.actions, domain_id
                 )
 
             if is_match and collector_rule_vo.options.stop_processing:
                 break
 
-        return cloud_service_data
+        return asset_data
 
-    def _change_cloud_service_data_with_actions(
-        self, cloud_service_data: dict, actions: dict, domain_id: str
+    def _change_asset_data_with_actions(
+        self, asset_data: dict, actions: dict, domain_id: str
     ) -> dict:
         for action, value in actions.items():
             if action == "change_project":
                 project_info = self._get_project("project_id", value, domain_id)
 
                 if project_info:
-                    cloud_service_data["project_id"] = project_info["project_id"]
-                    cloud_service_data["workspace_id"] = project_info["workspace_id"]
+                    asset_data["project_id"] = project_info["project_id"]
+                    asset_data["workspace_id"] = project_info["workspace_id"]
 
             elif action == "match_project":
                 source = value["source"]
                 target_key = value.get("target", "project_id")
-                target_value = utils.get_dict_value(cloud_service_data, source)
+                target_value = utils.get_dict_value(asset_data, source)
 
                 if target_value:
                     project_info = self._get_project(
@@ -133,31 +131,27 @@ class CollectorRuleManager(BaseManager):
                     )
 
                     if project_info:
-                        cloud_service_data["project_id"] = project_info["project_id"]
-                        cloud_service_data["workspace_id"] = project_info[
-                            "workspace_id"
-                        ]
+                        asset_data["project_id"] = project_info["project_id"]
+                        asset_data["workspace_id"] = project_info["workspace_id"]
 
             elif action == "match_service_account":
                 source = value["source"]
                 target_key = value.get("target", "service_account_id")
-                target_value = utils.get_dict_value(cloud_service_data, source)
+                target_value = utils.get_dict_value(asset_data, source)
                 if target_value:
                     service_account_info = self._get_service_account(
                         target_key, target_value, domain_id
                     )
                     if service_account_info:
-                        cloud_service_data["service_account_id"] = service_account_info[
+                        asset_data["service_account_id"] = service_account_info[
                             "service_account_id"
                         ]
-                        cloud_service_data["project_id"] = service_account_info[
-                            "project_id"
-                        ]
-                        cloud_service_data["workspace_id"] = service_account_info[
+                        asset_data["project_id"] = service_account_info["project_id"]
+                        asset_data["workspace_id"] = service_account_info[
                             "workspace_id"
                         ]
 
-        return cloud_service_data
+        return asset_data
 
     def _get_service_account(
         self, target_key: str, target_value: any, domain_id: str
@@ -223,8 +217,8 @@ class CollectorRuleManager(BaseManager):
         ] = project_info
         return project_info
 
-    def _change_cloud_service_data_by_rule(
-        self, cloud_service_data: dict, collector_rule_vo: CollectorRule
+    def _change_asset_data_by_rule(
+        self, asset_data: dict, collector_rule_vo: CollectorRule
     ) -> bool:
         conditions_policy = collector_rule_vo.conditions_policy
 
@@ -233,7 +227,7 @@ class CollectorRuleManager(BaseManager):
         else:
             results = list(
                 map(
-                    functools.partial(self._check_condition, cloud_service_data),
+                    functools.partial(self._check_condition, asset_data),
                     collector_rule_vo.conditions,
                 )
             )
@@ -244,33 +238,31 @@ class CollectorRuleManager(BaseManager):
                 return any(results)
 
     @staticmethod
-    def _check_condition(
-        cloud_service_data: dict, condition: CollectorRuleCondition
-    ) -> bool:
-        cloud_service_value = utils.get_dict_value(cloud_service_data, condition.key)
+    def _check_condition(asset_data: dict, condition: CollectorRuleCondition) -> bool:
+        asset_value = utils.get_dict_value(asset_data, condition.key)
         condition_value = condition.value
         operator = condition.operator
 
-        if cloud_service_value is None:
+        if asset_value is None:
             return False
 
         if operator == "eq":
-            if cloud_service_value == condition_value:
+            if asset_value == condition_value:
                 return True
             else:
                 return False
         elif operator == "contain":
-            if cloud_service_value.lower().find(condition_value.lower()) >= 0:
+            if asset_value.lower().find(condition_value.lower()) >= 0:
                 return True
             else:
                 return False
         elif operator == "not":
-            if cloud_service_value != condition_value:
+            if asset_value != condition_value:
                 return True
             else:
                 return False
         elif operator == "not_contain":
-            if cloud_service_value.lower().find(condition_value.lower()) < 0:
+            if asset_value.lower().find(condition_value.lower()) < 0:
                 return True
             else:
                 return False

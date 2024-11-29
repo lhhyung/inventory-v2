@@ -4,7 +4,7 @@ from spaceone.core.service import *
 from spaceone.core import utils
 from spaceone.core.model.mongo_model import QuerySet
 from spaceone.inventory_v2.manager.region_manager import RegionManager
-from spaceone.inventory_v2.model.region_model import Region
+from spaceone.inventory_v2.model.region.region_model import Region
 
 _LOGGER = logging.getLogger(__name__)
 _KEYWORD_FILTER = ["region_id", "name", "region_code"]
@@ -82,9 +82,7 @@ class RegionService(BaseService):
 
         params["updated_by"] = self.transaction.get_meta("collector_id") or "manual"
 
-        region_vo = self.region_mgr.get_region(
-            params["region_id"], params["domain_id"]
-        )
+        region_vo = self.region_mgr.get_region(params["region_id"], params["domain_id"])
         return self.region_mgr.update_region_by_vo(params, region_vo)
 
     @transaction(
@@ -106,9 +104,7 @@ class RegionService(BaseService):
 
     @check_required(["region_id", "domain_id"])
     def delete_resource(self, params: dict) -> None:
-        region_vo = self.region_mgr.get_region(
-            params["region_id"], params["domain_id"]
-        )
+        region_vo = self.region_mgr.get_region(params["region_id"], params["domain_id"])
         self.region_mgr.delete_region_by_vo(region_vo)
 
     @transaction(
@@ -129,9 +125,7 @@ class RegionService(BaseService):
 
         """
 
-        return self.region_mgr.get_region(
-            params["region_id"], params["domain_id"]
-        )
+        return self.region_mgr.get_region(params["region_id"], params["domain_id"])
 
     @transaction(
         permission="inventory:Region.read",

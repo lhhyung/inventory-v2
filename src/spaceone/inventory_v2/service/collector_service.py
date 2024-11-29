@@ -50,10 +50,10 @@ class CollectorService(BaseService):
         Args:
             params (dict): {
                 'name': 'str',              # required
+                'provider': 'str',
                 'plugin_info': 'dict',      # required
                 'schedule': 'dict',
                 'secret_filter': 'dict',
-                'provider': 'str',
                 'tags': 'dict',
                 'resource_group': 'str',    # required
                 'workspace_id': 'str',      # injected from auth
@@ -86,32 +86,28 @@ class CollectorService(BaseService):
         plugin_manager = PluginManager()
         collector_plugin_mgr = CollectorPluginManager()
 
-        create_params = params.dict()
         plugin_info = params.plugin_info
         plugin_id = plugin_info["plugin_id"]
 
         plugin_info_from_repository = self._get_plugin_from_repository(plugin_id)
-        capability = plugin_info_from_repository.get("capability", {})
-        plugin_provider = self._get_plugin_providers(
+        params.provider = self._get_plugin_providers(
             params.provider, plugin_info_from_repository
         )
 
-        create_params["capability"] = capability
-        create_params["provider"] = plugin_provider
-
-        if "secret_filter" in params:
-            if create_params["secret_filter"].get("state") == "ENABLED":
+        if secret_filter := params.secret_filter:
+            if secret_filter.get("state") == "ENABLED":
                 self._validate_secret_filter(
                     identity_mgr,
                     secret_mgr,
-                    create_params["secret_filter"],
-                    plugin_provider,
+                    params.secret_filter,
+                    params.provider,
                     domain_id,
                 )
             else:
-                del create_params["secret_filter"]
+                # todo : test
+                params.secret_filter = None
 
-        collector_vo = self.collector_mgr.create_collector(create_params)
+        collector_vo = self.collector_mgr.create_collector(params.dict())
 
         endpoint, updated_version = plugin_manager.get_endpoint(
             plugin_info["plugin_id"],
@@ -205,7 +201,7 @@ class CollectorService(BaseService):
     )
     @convert_model
     def update_plugin(
-            self, params: CollectorUpdatePluginRequest
+        self, params: CollectorUpdatePluginRequest
     ) -> Union[CollectorResponse, dict]:
         """Update plugin info of collector
         Args:
@@ -408,7 +404,7 @@ class CollectorService(BaseService):
     @append_keyword_filter(_KEYWORD_FILTER)
     @convert_model
     def list(
-            self, params: CollectorSearchQueryRequest
+        self, params: CollectorSearchQueryRequest
     ) -> Union[CollectorsResponse, dict]:
         """List collectors
         Args:
@@ -602,15 +598,15 @@ class CollectorService(BaseService):
         return JobResponse(**job_vo.to_dict())
 
     def _get_tasks(
-            self,
-            params: dict,
-            endpoint: str,
-            collector_id: str,
-            collector_provider: str,
-            plugin_info: dict,
-            secret_filter: dict,
-            domain_id: str,
-            collector_workspace_id: str = None,
+        self,
+        params: dict,
+        endpoint: str,
+        collector_id: str,
+        collector_provider: str,
+        plugin_info: dict,
+        secret_filter: dict,
+        domain_id: str,
+        collector_workspace_id: str = None,
     ) -> list:
         secret_mgr: SecretManager = self.locator.get_manager(SecretManager)
         collector_plugin_mgr: CollectorPluginManager = self.locator.get_manager(
@@ -654,7 +650,7 @@ class CollectorService(BaseService):
 
     @staticmethod
     def _check_secrets(
-            secret_mgr: SecretManager, secret_ids: list, provider: str, domain_id: str
+        secret_mgr: SecretManager, secret_ids: list, provider: str, domain_id: str
     ) -> None:
         query = {
             "filter": [
@@ -674,10 +670,10 @@ class CollectorService(BaseService):
 
     @staticmethod
     def _check_service_accounts(
-            identity_mgr: IdentityManager,
-            service_account_ids: list,
-            provider: str,
-            domain_id: str,
+        identity_mgr: IdentityManager,
+        service_account_ids: list,
+        provider: str,
+        domain_id: str,
     ) -> None:
         query = {
             "filter": [
@@ -702,10 +698,10 @@ class CollectorService(BaseService):
 
     @staticmethod
     def _check_schemas(
-            identity_mgr: IdentityManager,
-            schema_ids: list,
-            provider: str,
-            domain_id: str,
+        identity_mgr: IdentityManager,
+        schema_ids: list,
+        provider: str,
+        domain_id: str,
     ) -> None:
         query = {
             "filter": [
@@ -729,12 +725,12 @@ class CollectorService(BaseService):
             )
 
     def _validate_secret_filter(
-            self,
-            identity_mgr: IdentityManager,
-            secret_mgr: SecretManager,
-            secret_filter: dict,
-            provider: str,
-            domain_id: str,
+        self,
+        identity_mgr: IdentityManager,
+        secret_mgr: SecretManager,
+        secret_filter: dict,
+        provider: str,
+        domain_id: str,
     ) -> None:
         if "secrets" in secret_filter:
             self._check_secrets(
@@ -770,11 +766,11 @@ class CollectorService(BaseService):
             )
 
     def _update_collector_plugin(
-            self,
-            endpoint: str,
-            updated_version: str,
-            plugin_info: dict,
-            collector_vo: Collector,
+        self,
+        endpoint: str,
+        updated_version: str,
+        plugin_info: dict,
+        collector_vo: Collector,
     ) -> Collector:
         collector_plugin_mgr = CollectorPluginManager()
         plugin_response = collector_plugin_mgr.init_plugin(
@@ -804,12 +800,12 @@ class CollectorService(BaseService):
         return collector_vo
 
     def _get_secret_ids_from_filter(
-            self,
-            secret_filter: dict,
-            provider: str,
-            domain_id: str,
-            secret_id: str = None,
-            workspace_id: str = None,
+        self,
+        secret_filter: dict,
+        provider: str,
+        domain_id: str,
+        secret_id: str = None,
+        workspace_id: str = None,
     ) -> list:
         secret_manager: SecretManager = self.locator.get_manager(SecretManager)
 
@@ -856,11 +852,11 @@ class CollectorService(BaseService):
 
     @staticmethod
     def create_collector_rules_by_metadata(
-            collector_rules: list,
-            collector_id: str,
-            resource_group: str,
-            domain_id: str,
-            workspace_id: str = None,
+        collector_rules: list,
+        collector_id: str,
+        resource_group: str,
+        domain_id: str,
+        workspace_id: str = None,
     ):
         collector_rule_mgr = CollectorRuleManager()
 
@@ -887,10 +883,10 @@ class CollectorService(BaseService):
 
     @staticmethod
     def _make_secret_filter(
-            secret_filter: dict,
-            provider: str,
-            secret_id: str = None,
-            workspace_id: str = None,
+        secret_filter: dict,
+        provider: str,
+        secret_id: str = None,
+        workspace_id: str = None,
     ) -> list:
         _filter = [{"k": "provider", "v": provider, "o": "eq"}]
 
@@ -916,7 +912,7 @@ class CollectorService(BaseService):
                 _filter.append({"k": "secret_id", "v": exclude_secrets, "o": "not_in"})
 
             if exclude_service_accounts := secret_filter.get(
-                    "exclude_service_accounts"
+                "exclude_service_accounts"
             ):
                 _filter.append(
                     {
@@ -930,6 +926,22 @@ class CollectorService(BaseService):
                 _filter.append({"k": "schema", "v": exclude_schemas, "o": "not_in"})
 
         return _filter
+
+    @staticmethod
+    def _convert_plugin_provider_to_categories(plugin_info: dict) -> list:
+        categories = []
+        supported_providers = plugin_info.get("capability", {}).get(
+            "supported_providers", []
+        )
+
+        if supported_providers:
+            # Multi providers
+            categories.extend(supported_providers)
+        elif provider := plugin_info.get("provider"):
+            # Single provider
+            categories.append(provider)
+
+        return categories
 
     @staticmethod
     def _get_plugin_providers(provider: str, plugin_info: dict) -> str:

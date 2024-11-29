@@ -10,6 +10,7 @@ from spaceone.core.scheduler.task_schema import SPACEONE_TASK_SCHEMA
 from spaceone.core.model.mongo_model import QuerySet
 
 from spaceone.inventory_v2.manager.job_manager import JobManager
+
 # from spaceone.inventory.manager.cleanup_manager import CleanupManager
 from spaceone.inventory_v2.model.job_task.database import JobTask
 
@@ -31,11 +32,11 @@ class JobTaskManager(BaseManager):
         return job_task_vo
 
     def get(
-            self,
-            job_task_id: str,
-            domain_id: str,
-            workspace_id: str = None,
-            user_projects: list = None,
+        self,
+        job_task_id: str,
+        domain_id: str,
+        workspace_id: str = None,
+        user_projects: list = None,
     ) -> JobTask:
         conditions = {
             "job_task_id": job_task_id,
@@ -60,17 +61,32 @@ class JobTaskManager(BaseManager):
         return self.job_task_model.stat(**query)
 
     def push_job_task(self, params: dict) -> None:
-        task = self.create_task_pipeline(copy.deepcopy(params))
+        token = self.transaction.meta.get("token")
+        params["token"] = token
+        task = {
+            "name": "collecting_resources",
+            "version": "v1",
+            "executionEngine": "BaseWorker",
+            "stages": [
+                {
+                    "locator": "MANAGER",
+                    "name": "CollectingManager",
+                    "metadata": {},
+                    "method": "collecting_resources",
+                    "params": {"params": params},
+                }
+            ],
+        }
+
         validate(task, schema=SPACEONE_TASK_SCHEMA)
-        json_task = json.dumps(task)
-        queue.put(self.get_queue_name(name="collect_queue"), json_task)
+        queue.put("inventory_q", utils.dump_json(task))
 
     @staticmethod
     def add_error(
-            job_task_vo: JobTask,
-            error_code: str,
-            error_message: str,
-            additional: dict = None,
+        job_task_vo: JobTask,
+        error_code: str,
+        error_message: str,
+        additional: dict = None,
     ) -> None:
         error_info = {"error_code": error_code, "message": str(error_message).strip()}
 
@@ -84,10 +100,10 @@ class JobTaskManager(BaseManager):
 
     @staticmethod
     def _update_job_status_by_vo(
-            job_task_vo: JobTask,
-            status: str,
-            started_at: datetime = None,
-            finished_at: datetime = None,
+        job_task_vo: JobTask,
+        status: str,
+        started_at: datetime = None,
+        finished_at: datetime = None,
     ) -> None:
         params = {"status": status}
 
@@ -104,8 +120,8 @@ class JobTaskManager(BaseManager):
         job_task_vo.update(params)
 
     def make_inprogress_by_vo(
-            self,
-            job_task_vo: JobTask,
+        self,
+        job_task_vo: JobTask,
     ) -> None:
         if job_task_vo.status == "PENDING":
             self._update_job_status_by_vo(
@@ -115,8 +131,8 @@ class JobTaskManager(BaseManager):
             )
 
     def make_success_by_vo(
-            self,
-            job_task_vo: JobTask,
+        self,
+        job_task_vo: JobTask,
     ) -> None:
         self._update_job_status_by_vo(
             job_task_vo,
@@ -125,9 +141,9 @@ class JobTaskManager(BaseManager):
         )
 
     def make_failure_by_vo(
-            self,
-            job_task_vo: JobTask,
-            collecting_count_info: dict = None,
+        self,
+        job_task_vo: JobTask,
+        collecting_count_info: dict = None,
     ) -> None:
         self._update_job_status_by_vo(
             job_task_vo,
@@ -138,7 +154,7 @@ class JobTaskManager(BaseManager):
         self.decrease_remained_sub_tasks(job_task_vo, collecting_count_info)
 
     def decrease_remained_sub_tasks(
-            self, job_task_vo: JobTask, collecting_count_info: dict = None
+        self, job_task_vo: JobTask, collecting_count_info: dict = None
     ) -> JobTask:
         if collecting_count_info:
             self._update_collecting_count_info(job_task_vo, collecting_count_info)
@@ -165,7 +181,7 @@ class JobTaskManager(BaseManager):
 
     @staticmethod
     def _update_collecting_count_info(
-            job_task_vo: JobTask, collecting_count_info: dict
+        job_task_vo: JobTask, collecting_count_info: dict
     ) -> None:
         _LOGGER.debug(
             f"[_update_collecting_count_info] update collecting count => {utils.dump_json(collecting_count_info)}"

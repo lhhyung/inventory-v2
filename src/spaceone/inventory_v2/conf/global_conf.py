@@ -47,13 +47,20 @@ CONNECTORS = {
             "identity": "grpc://identity:50051",
             "monitoring": "grpc://monitoring:50051",
             "file_manager": "grpc://file-manager:50051",
-            "secret": "grpc://secret:50051"
+            "secret": "grpc://secret:50051",
         },
     }
 }
 
+# Queue Settings
+QUEUES = {
+    "inventory_q": {
+        "backend": "spaceone.core.queue.redis_queue.RedisQueue",
+        "host": "redis",
+        "port": 6379,
+        "channel": "inventory_job",
+    },
+}
 # Scheduler Settings
-QUEUES = {}
 SCHEDULERS = {}
 WORKERS = {}
-TOKEN_INFO = {}

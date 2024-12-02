@@ -22,4 +22,4 @@ RUN pip install --upgrade spaceone-api
 EXPOSE ${SPACEONE_PORT}
 
 ENTRYPOINT ["spaceone"]
-CMD ["run", "grpc-server", "spaceone.inventory_V2", "-m", "/opt"]
+CMD ["run", "grpc-server", "spaceone.inventory_v2", "-m", "/opt"]

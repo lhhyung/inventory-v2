@@ -6,12 +6,12 @@ from dateutil.relativedelta import relativedelta
 from spaceone.core.model.mongo_model import QuerySet
 from spaceone.core.manager import BaseManager
 from spaceone.core import utils, cache
-from spaceone.inventory.model.metric_data.database import (
+from spaceone.inventory_v2.model.metric_data.database import (
     MetricData,
     MonthlyMetricData,
     MetricQueryHistory,
 )
-from spaceone.inventory.error.metric import (
+from spaceone.inventory_v2.error.metric import (
     ERROR_INVALID_DATE_RANGE,
     ERROR_INVALID_PARAMETER_TYPE,
 )

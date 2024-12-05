@@ -7,15 +7,14 @@
 ######################################################################
 
 RESOURCE_MAP = {
-    "inventory.CloudService": ("CloudServiceService", "CloudServiceManager"),
-    "inventory.CloudServiceType": (
-        "CloudServiceTypeService",
-        "CloudServiceTypeManager",
+    "inventory.Asset": ("AssetService", "AssetManager"),
+    "inventory.AssetType": (
+        "AssetTypeService",
+        "AssetTypeManager",
     ),
     "inventory.Region": ("RegionService", "RegionManager"),
     "inventory.ErrorResource": ("CollectorService", "CollectingManager"),
 }
-
 
 OP_MAP = {"=": "eq", ">=": "gte", "<=": "lte", ">": "gt", "<": "lt", "!=": "not"}
 

@@ -4,22 +4,21 @@ from spaceone.core.model.mongo_model import MongoModel
 
 
 class AssetType(MongoModel):
-    asset_type_id = StringField(max_length=40, generate_id="asset-type", unique=True)
+    asset_type_id = StringField(max_length=40, unique=True)
     name = StringField(
         max_length=255,
-        unique_with=["provider", "asset_group_id", "workspace_id", "domain_id"],
+        unique_with=["provider", "workspace_id", "domain_id"],
     )
+    description = StringField(max_length=255, default=None, null=True)
+    icon = StringField(max_length=255, default=None, null=True)
     provider = StringField(max_length=255)
-    asset_grou_id = StringField(max_length=255)
-    # cloud_service_type_key = StringField(max_length=255)
-    # ref_cloud_service_type = StringField(max_length=255)
-    service_code = StringField(max_length=255, default=None, null=True)
-    # is_primary = BooleanField(default=False)
-    # is_major = BooleanField(default=False)
-    resource_type = StringField(max_length=255)
-    labels = ListField(StringField(max_length=255))
     metadata = DictField()
     tags = DictField()
+    is_managed = BooleanField(default=None, null=True)
+    resource_group = StringField(
+        max_length=255, required=True, choices=("DOMAIN", "WORKSPACE")
+    )
+    asset_groups = StringField(max_length=255)
     workspace_id = StringField(max_length=40)
     domain_id = StringField(max_length=40)
     updated_by = StringField(default=None, null=True)
@@ -28,28 +27,20 @@ class AssetType(MongoModel):
 
     meta = {
         "updatable_fields": [
-            # "cloud_service_type_key",
-            "service_code",
-            # "is_primary",
-            # "is_major",
-            "resource_type",
+            "name",
+            "description",
+            "icon",
             "metadata",
-            "labels",
             "tags",
+            "asset_groups",
             "updated_by",
             "updated_at",
         ],
-        "minimal_fields": [
-            "asset_type_id",
-            "name",
-            "provider",
-            "group",
-            "service_code",
-            # "is_primary",
-            # "is_major",
-            "resource_type",
-        ],
-        "ordering": ["provider", "group", "name"],
+        "minimal_fields": ["asset_type_id", "name", "provider", "asset_groups"],
+        "change_query_keys": {
+            "asset_groups": "asset_group_id",
+        },
+        "ordering": ["provider", "name", "resource_group"],
         "indexes": [
             {
                 "fields": ["domain_id", "-updated_at", "updated_by"],
@@ -64,9 +55,8 @@ class AssetType(MongoModel):
                     "domain_id",
                     "workspace_id",
                     "provider",
-                    "group",
+                    "asset_groups",
                     "name",
-                    "is_primary",
                 ],
                 "name": "COMPOUND_INDEX_FOR_SEARCH_2",
             },

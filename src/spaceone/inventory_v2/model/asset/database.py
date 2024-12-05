@@ -9,7 +9,7 @@ from spaceone.inventory_v2.model.region.region_model import Region
 
 
 class Asset(MongoModel):
-    asset_id = StringField(max_length=40, generate_id="asset", unique=True)
+    asset_id = StringField(max_length=40, unique=True)
     name = StringField(default=None, null=True)
     state = StringField(max_length=20, choices=("ACTIVE", "DELETED"), default="ACTIVE")
     resource_id = StringField(max_length=255, default=None, null=True)

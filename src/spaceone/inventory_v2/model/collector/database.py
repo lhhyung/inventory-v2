@@ -51,6 +51,7 @@ class Collector(MongoModel):
     schedule = EmbeddedDocumentField(Scheduled, default=None, null=False)
     secret_filter = EmbeddedDocumentField(SecretFilter, default=None, null=True)
     tags = DictField()
+    created_by = StringField(max_length=255)
     resource_group = StringField(max_length=40, choices=("DOMAIN", "WORKSPACE"))
     workspace_id = StringField(max_length=40)
     domain_id = StringField(max_length=40)
@@ -72,6 +73,7 @@ class Collector(MongoModel):
             "name",
             "provider",
             "plugin_info",
+            "created_by",
             "resource_group",
         ],
         "change_query_keys": {

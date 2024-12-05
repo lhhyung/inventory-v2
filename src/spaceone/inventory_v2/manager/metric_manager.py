@@ -18,7 +18,7 @@ from spaceone.inventory_v2.model.metric.database import Metric
 from spaceone.inventory_v2.manager.managed_resource_manager import (
     ManagedResourceManager,
 )
-from spaceone.inventory_v2.manager.cloud_service_manager import CloudServiceManager
+from spaceone.inventory_v2.manager.asset_manager import AssetManager
 from spaceone.inventory_v2.manager.metric_data_manager import MetricDataManager
 
 _LOGGER = logging.getLogger(__name__)
@@ -331,8 +331,8 @@ class MetricManager(BaseManager):
                 query["select"][group_by_key] = group_by_key
 
         _LOGGER.debug(f"[_analyze_cloud_service] Analyze Query: {query}")
-        cloud_svc_mgr = CloudServiceManager()
-        response = cloud_svc_mgr.analyze_cloud_services(
+        asset_mgr = AssetManager()
+        response = asset_mgr.analyze_assets(
             query, change_filter=True, domain_id=domain_id
         )
         return response.get("results", [])

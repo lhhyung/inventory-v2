@@ -77,12 +77,12 @@ class CollectorSearchQueryRequest(BaseModel):
 
 class CollectorStatQueryRequest(BaseModel):
     query: dict
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[list, str, None] = None
     domain_id: str
 
 
 class CollectorCollectRequest(BaseModel):
     collector_id: str
     secret_id: str
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[list, str, None] = None
     domain_id: str

@@ -1,6 +1,6 @@
 from spaceone.core.pygrpc import BaseAPI
 from spaceone.api.inventory_v2.v1 import metric_pb2, metric_pb2_grpc
-from spaceone.inventory.service.metric_service import MetricService
+from spaceone.inventory_v2.service.metric_service import MetricService
 
 
 class Metric(BaseAPI, metric_pb2_grpc.MetricServicer):

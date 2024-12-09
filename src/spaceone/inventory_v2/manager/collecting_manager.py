@@ -19,7 +19,6 @@ from spaceone.inventory_v2.model.job_task.database import JobTask
 from spaceone.inventory_v2.error import *
 from spaceone.inventory_v2.lib import rule_matcher
 from spaceone.inventory_v2.conf.collector_conf import *
-from spaceone.inventory_v2.service.asset_service import AssetService
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -51,6 +50,9 @@ class CollectingManager(BaseManager):
                 'token': 'str'
             }
         """
+        from spaceone.core import model
+
+        model.init_all(False)
 
         # set token to transaction meta
         token = params["token"]
@@ -236,6 +238,9 @@ class CollectingManager(BaseManager):
                     # total_count -= 1
                     pass
 
+                elif resource_type in ["inventory.Region"]:
+                    pass
+
                 else:
                     upsert_result = self._upsert_resource(
                         resource_data, params, job_task_vo
@@ -377,6 +382,18 @@ class CollectingManager(BaseManager):
 
         response = ERROR
 
+        if resource_type in [
+            "inventory.AssetType",
+            "inventory.AssetGroup",
+            "inventory.NamespaceGroup",
+            "inventory.Namespace",
+            "inventory.Metric",
+            "inventory.Region",
+        ]:
+            request_data["resource_group"] = "DOMAIN"
+            request_data["workspace_id"] = "*"
+            request_data["is_managed"] = True
+
         if resource_state == "FAILURE":
             error_message = resource_data.get("message", "Unknown error.")
             _LOGGER.error(
@@ -453,6 +470,7 @@ class CollectingManager(BaseManager):
             _LOGGER.error(
                 f"[_upsert_resource] resource upsert error ({job_task_id}): {e.message}"
             )
+            _LOGGER.error(request_data)
             additional = self._set_error_addition_info(
                 resource_type, total_count, request_data
             )
@@ -513,7 +531,7 @@ class CollectingManager(BaseManager):
         if resource_type in self._service_and_manager_map:
             return self._service_and_manager_map[resource_type]
 
-        service: AssetService = self.locator.get_service(RESOURCE_MAP[resource_type][0])
+        service = self.locator.get_service(RESOURCE_MAP[resource_type][0])
         manager = self.locator.get_manager(RESOURCE_MAP[resource_type][1])
 
         self._service_and_manager_map[resource_type] = service, manager
@@ -559,7 +577,7 @@ class CollectingManager(BaseManager):
             match_rules (list): e.g. {1:['reference.resource_id'], 2:['name']}
 
         Return:
-            match_resource (dict) : resource_id for update (e.g. {'cloud_service_id': 'cloud-svc-abcde12345'})
+            match_resource (dict) : resource_id for update (e.g. {'asset_id': 'asset-abcde12345'})
             total_count (int) : total count of matched resources
         """
 

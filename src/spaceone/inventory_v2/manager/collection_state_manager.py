@@ -19,7 +19,7 @@ class CollectionStateManager(BaseManager):
     def create_collection_state(self, asset_id: str, domain_id: str) -> None:
         def _rollback(vo: CollectionState):
             _LOGGER.info(
-                f"[ROLLBACK] Delete collection state: cloud_service_id = {vo.cloud_service_id}, "
+                f"[ROLLBACK] Delete collection state: asset_id = {vo.asset_id}, "
                 f"collector_id = {vo.collector_id}"
             )
             vo.terminate()
@@ -41,7 +41,7 @@ class CollectionStateManager(BaseManager):
     ) -> CollectionState:
         def _rollback(old_data):
             _LOGGER.info(
-                f"[ROLLBACK] Revert collection state : cloud_service_id = {state_vo.cloud_service_id}, "
+                f"[ROLLBACK] Revert collection state : asset_id = {state_vo.asset_id}, "
                 f"collector_id = {state_vo.collector_id}"
             )
             state_vo.update(old_data)
@@ -56,13 +56,13 @@ class CollectionStateManager(BaseManager):
             self.update_collection_state_by_vo(params, state_vo)
 
     def get_collection_state(
-        self, cloud_service_id: str, domain_id: str
+        self, asset_id: str, domain_id: str
     ) -> Union[CollectionState, None]:
         if self.collector_id and self.secret_id:
             state_vos = self.collection_state_model.filter(
                 collector_id=self.collector_id,
                 secret_id=self.secret_id,
-                cloud_service_id=cloud_service_id,
+                asset_id=asset_id,
                 domain_id=domain_id,
             )
 
@@ -77,18 +77,16 @@ class CollectionStateManager(BaseManager):
     def list_collection_states(self, query: dict) -> Tuple[QuerySet, int]:
         return self.collection_state_model.query(**query)
 
-    def delete_collection_state_by_cloud_service_id(
+    def delete_collection_state_by_asset_id(
         self, resource_id: str, domain_id: str
     ) -> None:
         state_vos = self.filter_collection_states(
-            cloud_service_id=resource_id, domain_id=domain_id
+            asset_id=resource_id, domain_id=domain_id
         )
         state_vos.delete()
 
-    def delete_collection_state_by_cloud_service_ids(
-        self, cloud_service_ids: List[str]
-    ) -> None:
-        state_vos = self.filter_collection_states(cloud_service_id=cloud_service_ids)
+    def delete_collection_state_by_asset_ids(self, asset_ids: List[str]) -> None:
+        state_vos = self.filter_collection_states(asset_id=asset_ids)
         state_vos.delete()
 
     def delete_collection_state_by_collector_id(

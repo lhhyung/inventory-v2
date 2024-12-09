@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Union, Tuple
 
 from mongoengine import QuerySet
@@ -609,9 +610,7 @@ class CollectorService(BaseService):
         collector_workspace_id: str = None,
     ) -> list:
         secret_mgr: SecretManager = self.locator.get_manager(SecretManager)
-        collector_plugin_mgr: CollectorPluginManager = self.locator.get_manager(
-            CollectorPluginManager
-        )
+        collector_plugin_mgr = CollectorPluginManager()
 
         tasks = []
         secret_ids = self._get_secret_ids_from_filter(
@@ -632,18 +631,13 @@ class CollectorService(BaseService):
                 "domain_id": domain_id,
             }
 
-            try:
-                response = collector_plugin_mgr.get_tasks(
-                    endpoint,
-                    secret_data.get("data", {}),
-                    plugin_info.get("options", {}),
-                )
-                _LOGGER.debug(f"[get_tasks] sub tasks({collector_id}): {response}")
-                _task["sub_tasks"] = response.get("tasks", [])
-
-            except Exception as e:
-                pass
-
+            response = collector_plugin_mgr.get_tasks(
+                endpoint,
+                secret_data.get("data", {}),
+                plugin_info.get("options", {}),
+            )
+            _LOGGER.debug(f"[get_tasks] sub tasks({collector_id}): {response}")
+            _task["sub_tasks"] = response.get("tasks", [])
             tasks.append(_task)
 
         return tasks

@@ -21,7 +21,7 @@ class CollectorResponse(BaseModel):
     schedule: Union[dict, None] = None
     tags: Union[dict, None] = None
     created_by: Union[str, None] = None
-    resource_group: ResourceGroup
+    resource_group: Union[ResourceGroup, None] = None
     workspace_id: Union[str, None] = None
     domain_id: Union[str, None] = None
     created_at: Union[datetime, None] = None

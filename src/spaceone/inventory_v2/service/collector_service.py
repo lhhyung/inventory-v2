@@ -202,7 +202,7 @@ class CollectorService(BaseService):
     )
     @convert_model
     def update_plugin(
-        self, params: CollectorUpdatePluginRequest
+            self, params: CollectorUpdatePluginRequest
     ) -> Union[CollectorResponse, dict]:
         """Update plugin info of collector
         Args:
@@ -388,7 +388,6 @@ class CollectorService(BaseService):
         permission="inventory-v2:Collector.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
-    @change_value_by_rule("APPEND", "workspace_id", "*")
     @check_required(["domain_id"])
     @append_query_filter(
         [
@@ -403,9 +402,10 @@ class CollectorService(BaseService):
         ]
     )
     @append_keyword_filter(_KEYWORD_FILTER)
+    @change_value_by_rule("APPEND", "workspace_id", "*")
     @convert_model
     def list(
-        self, params: CollectorSearchQueryRequest
+            self, params: CollectorSearchQueryRequest
     ) -> Union[CollectorsResponse, dict]:
         """List collectors
         Args:
@@ -599,15 +599,15 @@ class CollectorService(BaseService):
         return JobResponse(**job_vo.to_dict())
 
     def _get_tasks(
-        self,
-        params: dict,
-        endpoint: str,
-        collector_id: str,
-        collector_provider: str,
-        plugin_info: dict,
-        secret_filter: dict,
-        domain_id: str,
-        collector_workspace_id: str = None,
+            self,
+            params: dict,
+            endpoint: str,
+            collector_id: str,
+            collector_provider: str,
+            plugin_info: dict,
+            secret_filter: dict,
+            domain_id: str,
+            collector_workspace_id: str = None,
     ) -> list:
         secret_mgr: SecretManager = self.locator.get_manager(SecretManager)
         collector_plugin_mgr = CollectorPluginManager()
@@ -644,7 +644,7 @@ class CollectorService(BaseService):
 
     @staticmethod
     def _check_secrets(
-        secret_mgr: SecretManager, secret_ids: list, provider: str, domain_id: str
+            secret_mgr: SecretManager, secret_ids: list, provider: str, domain_id: str
     ) -> None:
         query = {
             "filter": [
@@ -664,10 +664,10 @@ class CollectorService(BaseService):
 
     @staticmethod
     def _check_service_accounts(
-        identity_mgr: IdentityManager,
-        service_account_ids: list,
-        provider: str,
-        domain_id: str,
+            identity_mgr: IdentityManager,
+            service_account_ids: list,
+            provider: str,
+            domain_id: str,
     ) -> None:
         query = {
             "filter": [
@@ -692,10 +692,10 @@ class CollectorService(BaseService):
 
     @staticmethod
     def _check_schemas(
-        identity_mgr: IdentityManager,
-        schema_ids: list,
-        provider: str,
-        domain_id: str,
+            identity_mgr: IdentityManager,
+            schema_ids: list,
+            provider: str,
+            domain_id: str,
     ) -> None:
         query = {
             "filter": [
@@ -719,12 +719,12 @@ class CollectorService(BaseService):
             )
 
     def _validate_secret_filter(
-        self,
-        identity_mgr: IdentityManager,
-        secret_mgr: SecretManager,
-        secret_filter: dict,
-        provider: str,
-        domain_id: str,
+            self,
+            identity_mgr: IdentityManager,
+            secret_mgr: SecretManager,
+            secret_filter: dict,
+            provider: str,
+            domain_id: str,
     ) -> None:
         if "secrets" in secret_filter:
             self._check_secrets(
@@ -760,11 +760,11 @@ class CollectorService(BaseService):
             )
 
     def _update_collector_plugin(
-        self,
-        endpoint: str,
-        updated_version: str,
-        plugin_info: dict,
-        collector_vo: Collector,
+            self,
+            endpoint: str,
+            updated_version: str,
+            plugin_info: dict,
+            collector_vo: Collector,
     ) -> Collector:
         collector_plugin_mgr = CollectorPluginManager()
         plugin_response = collector_plugin_mgr.init_plugin(
@@ -794,12 +794,12 @@ class CollectorService(BaseService):
         return collector_vo
 
     def _get_secret_ids_from_filter(
-        self,
-        secret_filter: dict,
-        provider: str,
-        domain_id: str,
-        secret_id: str = None,
-        workspace_id: str = None,
+            self,
+            secret_filter: dict,
+            provider: str,
+            domain_id: str,
+            secret_id: str = None,
+            workspace_id: str = None,
     ) -> list:
         secret_manager: SecretManager = self.locator.get_manager(SecretManager)
 
@@ -846,11 +846,11 @@ class CollectorService(BaseService):
 
     @staticmethod
     def create_collector_rules_by_metadata(
-        collector_rules: list,
-        collector_id: str,
-        resource_group: str,
-        domain_id: str,
-        workspace_id: str = None,
+            collector_rules: list,
+            collector_id: str,
+            resource_group: str,
+            domain_id: str,
+            workspace_id: str = None,
     ):
         collector_rule_mgr = CollectorRuleManager()
 
@@ -877,10 +877,10 @@ class CollectorService(BaseService):
 
     @staticmethod
     def _make_secret_filter(
-        secret_filter: dict,
-        provider: str,
-        secret_id: str = None,
-        workspace_id: str = None,
+            secret_filter: dict,
+            provider: str,
+            secret_id: str = None,
+            workspace_id: str = None,
     ) -> list:
         _filter = [{"k": "provider", "v": provider, "o": "eq"}]
 
@@ -906,7 +906,7 @@ class CollectorService(BaseService):
                 _filter.append({"k": "secret_id", "v": exclude_secrets, "o": "not_in"})
 
             if exclude_service_accounts := secret_filter.get(
-                "exclude_service_accounts"
+                    "exclude_service_accounts"
             ):
                 _filter.append(
                     {

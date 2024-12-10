@@ -19,11 +19,9 @@ MERGE_KEYS = [
     "name",
     "ip_addresses",
     "account",
-    "instance_type",
-    "instance_size",
-    "reference",
-    "region_code",
-    "ref_region",
+    "resource_id",
+    "external_link",
+    "region_id",
     "project_id",
     "data",
 ]
@@ -115,6 +113,22 @@ class AssetManager(BaseManager, ResourceManager):
         return self.asset_model.query(
             **query, target=target, reference_filter=reference_filter
         )
+
+    def analyze_assets(
+        self,
+        query: dict,
+        change_filter: bool = False,
+        domain_id: str = None,
+        reference_filter: dict = None,
+    ):
+        if change_filter:
+            query = self._change_filter_tags(query)
+            query = self._change_filter_project_group_id(query, domain_id)
+
+            # Append Query for DELETED filter (Temporary Logic)
+            query = self._append_state_query(query)
+
+        return self.asset_model.analyze(**query, reference_filter=reference_filter)
 
     def _change_filter_tags(self, query: dict) -> dict:
         change_filter = []

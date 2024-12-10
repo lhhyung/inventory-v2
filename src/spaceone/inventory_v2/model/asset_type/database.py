@@ -5,10 +5,7 @@ from spaceone.core.model.mongo_model import MongoModel
 
 class AssetType(MongoModel):
     asset_type_id = StringField(max_length=40, unique=True)
-    name = StringField(
-        max_length=255,
-        unique_with=["provider", "workspace_id", "domain_id"],
-    )
+    name = StringField(max_length=255)
     description = StringField(max_length=255, default=None, null=True)
     icon = StringField(max_length=255, default=None, null=True)
     provider = StringField(max_length=255)

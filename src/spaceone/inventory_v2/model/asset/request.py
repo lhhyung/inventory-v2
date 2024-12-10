@@ -10,21 +10,21 @@ __all__ = [
 
 
 class AssetCreateRequest(BaseModel):
-    asset_code: Union[str, None]
+    asset_id: Union[str, None]
     name: Union[str, None]
     provider: str
     asset_type: str
     ipaddresses: Union[List[str], None]
     account: Union[str, None]
-    instance_type: Union[str, None]
-    instance_size: Union[float, None]
     data: dict
     metadata: Union[dict, None]
     tags: Union[dict, None]
-    region: Union[str, None]
+    region_id: Union[str, None]
+    service_account_id: Union[str, None]
     project_id: str
     workspace_id: str
     domain_id: str
+    users_projects: Union[List[str], None]
 
 
 class AssetUpdateRequest(BaseModel):

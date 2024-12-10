@@ -51,12 +51,12 @@ class AssetTypeManager(BaseManager, ResourceManager):
 
     def get_asset_type(
         self,
-        asset_Type_id: str,
+        asset_type_id: str,
         domain_id: str,
         workspace_id: str = None,
     ) -> AssetType:
         conditions = {
-            "asset_Type_id": asset_Type_id,
+            "asset_type_id": asset_type_id,
             "domain_id": domain_id,
         }
 

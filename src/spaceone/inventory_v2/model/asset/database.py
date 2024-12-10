@@ -20,8 +20,10 @@ class Asset(MongoModel):
     provider = StringField(max_length=255)
     account = StringField(max_length=255, default=None, null=True)
     region_id = StringField(max_length=40)
+    secret_id = StringField(max_length=40, default=None, null=True)
     asset_type_id = StringField(max_length=255)
-    collector_id = StringField(max_length=40)
+    service_account_id = StringField(max_length=40, default=None, null=True)
+    collector_id = StringField(max_length=40, default=None, null=True)
     project_id = StringField(max_length=40)
     workspace_id = StringField(max_length=40)
     domain_id = StringField(max_length=40)
@@ -35,12 +37,15 @@ class Asset(MongoModel):
             "name",
             "data",
             "state",
-            "account",
             "ip_addresses",
             "tags",
-            "project_id",
+            "account",
             "region_id",
             "asset_type_id",
+            "secret_id",
+            "service_account_id",
+            "collector_id",
+            "project_id",
             "updated_at",
             "last_collected_at",
             "deleted_at",

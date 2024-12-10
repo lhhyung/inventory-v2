@@ -22,18 +22,9 @@ from spaceone.inventory_v2.error import *
 from spaceone.inventory_v2.model.asset_type.database import AssetType
 from spaceone.inventory_v2.model.asset_type.response import AssetTypeResponse
 
-_KEYWORD_FILTER = [
-    "asset_id",
-    "name",
-    "ip_addresses",
-    "cloud_service_group",
-    "cloud_service_type",
-    "reference.resource_id",
-]
+_KEYWORD_FILTER = ["asset_type_id", "name", "asset_group_id"]
 
 _LOGGER = logging.getLogger(__name__)
-
-_KEYWORD_FILTER = ["asset_type_id", "name", "asset_group_id", "service_code"]
 
 
 @authentication_handler
@@ -131,7 +122,7 @@ class AssetTypeService(BaseService):
 
         return self.update_resource(params)
 
-    @check_required(["cloud_service_type_id", "workspace_id", "domain_id"])
+    @check_required(["asset_type_id", "workspace_id", "domain_id"])
     def update_resource(self, params: dict) -> AssetType:
         if json_metadata := params.get("json_metadata"):
             params["metadata"] = utils.load_json(json_metadata)
@@ -149,11 +140,11 @@ class AssetTypeService(BaseService):
         params["updated_by"] = self.transaction.get_meta("collector_id") or "manual"
         domain_id = params["domain_id"]
 
-        cloud_svc_type_vo = self.asset_type_mgr.get_asset_type(
+        asset_type_vo = self.asset_type_mgr.get_asset_type(
             params["asset_type_id"], domain_id
         )
 
-        return self.asset_type_mgr.update_asset_type_by_vo(params, cloud_svc_type_vo)
+        return self.asset_type_mgr.update_asset_type_by_vo(params, asset_type_vo)
 
     @transaction(
         permission="inventory:AssetType.write",
@@ -173,10 +164,10 @@ class AssetTypeService(BaseService):
 
         self.delete_resource(params)
 
-    @check_required(["cloud_service_type_id", "workspace_id", "domain_id"])
+    @check_required(["asset_type_id", "workspace_id", "domain_id"])
     def delete_resource(self, params: dict) -> None:
         asset_type_vo = self.asset_type_mgr.get_asset_type(
-            params["cloud_service_type_id"], params["domain_id"], params["workspace_id"]
+            params["asset_type_id"], params["domain_id"], params["workspace_id"]
         )
 
         self.asset_type_mgr.delete_asset_type_by_vo(asset_type_vo)

@@ -83,15 +83,15 @@ class CollectorRuleManager(BaseManager):
             custom_collector_rule_vos,
         ) = self._get_collector_rules(collector_id, domain_id)
 
-        cloud_service_data = self._apply_collector_rule_to_asset_data(
+        asset_data = self._apply_collector_rule_to_asset_data(
             asset_data, managed_collector_rule_vos, domain_id
         )
 
-        cloud_service_data = self._apply_collector_rule_to_asset_data(
-            cloud_service_data, custom_collector_rule_vos, domain_id
+        asset_data = self._apply_collector_rule_to_asset_data(
+            asset_data, custom_collector_rule_vos, domain_id
         )
 
-        return cloud_service_data
+        return asset_data
 
     def _apply_collector_rule_to_asset_data(
         self, asset_data: dict, collector_rule_vos: QuerySet, domain_id: str

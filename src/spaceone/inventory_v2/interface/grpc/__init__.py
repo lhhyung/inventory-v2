@@ -3,6 +3,7 @@ from .region import Region
 from .collector import Collector
 from .job import Job
 from .job_task import JobTask
+from .metric import Metric
 from .namespace_group import NamespaceGroup
 from .namespace import Namespace
 from .metric import Metric

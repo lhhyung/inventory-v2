@@ -39,7 +39,7 @@ class RegionDeleteRequest(BaseModel):
 
 class RegionGetRequest(BaseModel):
     region_id: str
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[list, str, None] = None
     domain_id: str
 
 
@@ -50,11 +50,11 @@ class RegionSearchQueryRequest(BaseModel):
     region_code: Union[str, None] = None
     provider: Union[str, None] = None
     exists_only: Union[bool, None] = None
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[list, str, None] = None
     domain_id: str
 
 
 class RegionStatQueryRequest(BaseModel):
     query: dict
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[list, str, None] = None
     domain_id: str

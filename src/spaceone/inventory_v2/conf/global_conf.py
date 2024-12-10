@@ -48,6 +48,7 @@ CONNECTORS = {
             "monitoring": "grpc://monitoring:50051",
             "file_manager": "grpc://file-manager:50051",
             "secret": "grpc://secret:50051",
+            "plugin": "grpc://plugin:50051",
         },
     }
 }

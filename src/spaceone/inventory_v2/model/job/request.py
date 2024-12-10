@@ -28,11 +28,13 @@ class JobSearchQueryRequest(BaseModel):
     query: dict
     job_id: Union[str, None]
     collector_id: Union[str, None]
+    workspace_id: Union[list, str, None]
+    domain_id: str
 
 
 class JobAnalyzeQueryRequest(BaseModel):
     query: Union[dict, None] = None
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[list, str, None] = None
     domain_id: str
 
 

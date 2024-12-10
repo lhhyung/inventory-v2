@@ -4,6 +4,8 @@ from spaceone.inventory_v2.model.region.region_model import Region
 from spaceone.inventory_v2.model.collector.database import Collector
 from spaceone.inventory_v2.model.collector_rule.database import CollectorRule
 from spaceone.inventory_v2.model.collection_state.database import CollectionState
+from spaceone.inventory_v2.model.namespace.database import Namespace
+from spaceone.inventory_v2.model.namespace_group.database import NamespaceGroup
 from spaceone.inventory_v2.model.metric.database import Metric
 from spaceone.inventory_v2.model.metric_data.database import MetricData
 from spaceone.inventory_v2.model.metric_example.database import MetricExample

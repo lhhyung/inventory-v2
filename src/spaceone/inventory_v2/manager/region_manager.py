@@ -39,7 +39,10 @@ class RegionManager(BaseManager):
         region_vo.delete()
 
     def get_region(
-        self, region_id: str, domain_id: str, workspace_id: Union[str, None] = None
+        self,
+        region_id: str,
+        domain_id: str,
+        workspace_id: Union[list, str, None] = None,
     ) -> Region:
         conditions = {"region_id": region_id, "domain_id": domain_id}
 

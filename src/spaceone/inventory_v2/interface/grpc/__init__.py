@@ -7,7 +7,8 @@ from .metric import Metric
 
 # from .namespace_group import NamespaceGroup
 # from .namespace import Namespace
-from .metric import Metric
+from .metric_data import MetricData
+from .metric_example import MetricExample
 
 _all_ = ["app"]
 
@@ -19,3 +20,5 @@ app.add_service(JobTask)
 # app.add_service(NamespaceGroup)
 # app.add_service(Namespace)
 app.add_service(Metric)
+app.add_service(MetricData)
+app.add_service(MetricExample)

@@ -3,7 +3,7 @@ from typing import Tuple
 
 from spaceone.core.model.mongo_model import QuerySet
 from spaceone.core.manager import BaseManager
-from spaceone.inventory.model.metric_example.database import MetricExample
+from spaceone.inventory_v2.model.metric_example.database import MetricExample
 
 _LOGGER = logging.getLogger(__name__)
 

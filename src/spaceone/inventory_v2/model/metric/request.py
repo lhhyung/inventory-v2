@@ -77,7 +77,7 @@ class MetricSearchQueryRequest(BaseModel):
     is_managed: Union[bool, None] = None
     exists_only: Union[bool, None] = None
     namespace_id: Union[str, None] = None
-    workspace_id: Union[str, list, None] = None
+    workspace_id: Union[list, str, None] = None
     domain_id: str
 
 

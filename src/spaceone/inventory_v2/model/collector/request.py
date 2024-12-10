@@ -83,6 +83,6 @@ class CollectorStatQueryRequest(BaseModel):
 
 class CollectorCollectRequest(BaseModel):
     collector_id: str
-    secret_id: str
+    secret_id: Union[str, None] = None
     workspace_id: Union[list, str, None] = None
     domain_id: str

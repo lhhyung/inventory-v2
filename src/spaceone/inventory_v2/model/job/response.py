@@ -6,9 +6,7 @@ from spaceone.core import utils
 
 from spaceone.inventory_v2.model.job.request import Status
 
-__all__ = [
-    "JobResponse"
-]
+__all__ = ["JobResponse", "JobsResponse"]
 
 
 class JobResponse(BaseModel):
@@ -35,3 +33,8 @@ class JobResponse(BaseModel):
         data["updated_at"] = utils.datetime_to_iso8601(data["updated_at"])
         data["finished_at"] = utils.datetime_to_iso8601(data.get("finished_at"))
         return data
+
+
+class JobsResponse(BaseModel):
+    results: List[JobResponse]
+    total_count: Union[int, None] = None

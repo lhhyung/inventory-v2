@@ -9,6 +9,7 @@ from spaceone.core.manager import BaseManager
 from spaceone.core.scheduler.task_schema import SPACEONE_TASK_SCHEMA
 from spaceone.core.model.mongo_model import QuerySet
 
+from spaceone.inventory_v2.manager.cleanup_manager import CleanupManager
 from spaceone.inventory_v2.manager.job_manager import JobManager
 
 # from spaceone.inventory.manager.cleanup_manager import CleanupManager
@@ -190,21 +191,22 @@ class JobTaskManager(BaseManager):
             if isinstance(value, int) and value > 0:
                 job_task_vo.increment(key, value)
 
-    # def _update_disconnected_and_deleted_count(self, job_task_vo: JobTask) -> dict:
-    #     try:
-    #         cleanup_mgr: CleanupManager = self.locator.get_manager(CleanupManager)
-    #         return cleanup_mgr.update_disconnected_and_deleted_count(
-    #             job_task_vo.collector_id,
-    #             job_task_vo.secret_id,
-    #             job_task_vo.job_task_id,
-    #             job_task_vo.domain_id,
-    #         )
-    #     except Exception as e:
-    #         _LOGGER.error(f"[_update_collection_state] failed: {e}")
-    #         return {
-    #             "disconnected_count": 0,
-    #             "deleted_count": 0,
-    #         }
+    @staticmethod
+    def _update_disconnected_and_deleted_count(job_task_vo: JobTask) -> dict:
+        try:
+            cleanup_mgr = CleanupManager()
+            return cleanup_mgr.update_disconnected_and_deleted_count(
+                job_task_vo.collector_id,
+                job_task_vo.secret_id,
+                job_task_vo.job_task_id,
+                job_task_vo.domain_id,
+            )
+        except Exception as e:
+            _LOGGER.error(f"[_update_collection_state] failed: {e}")
+            return {
+                "disconnected_count": 0,
+                "deleted_count": 0,
+            }
 
     @staticmethod
     def delete_job_task_by_vo(job_task_vo: JobTask) -> None:

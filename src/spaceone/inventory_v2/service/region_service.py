@@ -1,16 +1,14 @@
 import logging
 from typing import Union
 
-from mongoengine import QuerySet
-from spaceone.core import utils
 from spaceone.core.error import *
 from spaceone.core.service import *
 
 from spaceone.inventory_v2.manager.region_manager import RegionManager
 from spaceone.inventory_v2.manager.identity_manager import IdentityManager
-from spaceone.inventory_v2.model import Region
 from spaceone.inventory_v2.model.region.request import *
 from spaceone.inventory_v2.model.region.response import *
+from spaceone.inventory_v2.model.region.database import Region
 
 _LOGGER = logging.getLogger(__name__)
 _KEYWORD_FILTER = ["region_id", "name", "region_code"]
@@ -29,8 +27,9 @@ class RegionService(BaseService):
 
     @transaction(
         permission="inventory-v2:Region.write",
-        role_types=["DOMAIN_ADMIN"],
+        role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER"],
     )
+    @convert_model
     def create(self, params: RegionCreateRequest) -> Union[RegionResponse, dict]:
         """
         Args:
@@ -47,19 +46,18 @@ class RegionService(BaseService):
         Returns:
             RegionResponse:
         """
+        region_vo = self.create_resource(params.dict())
 
-        return self.create_resource(params)
+        # return self.create_resource(params)
+        return RegionResponse(**region_vo.to_dict())
 
-    @convert_model
-    def create_resource(
-        self, params: RegionCreateRequest
-    ) -> Union[RegionResponse, dict]:
+    def create_resource(self, params: dict) -> Region:
 
         identity_mgr = IdentityManager()
 
-        domain_id = params.domain_id
-        workspace_id = params.workspace_id
-        resource_group = params.resource_group
+        domain_id = params["domain_id"]
+        workspace_id = params.get("workspace_id")
+        resource_group = params["resource_group"]
 
         # Check permission by resource group
         if resource_group == "WORKSPACE":
@@ -68,21 +66,20 @@ class RegionService(BaseService):
 
             identity_mgr.check_workspace(workspace_id, domain_id)
         else:
-            params.workspace_id = "*"
+            params["workspace_id"] = "*"
 
-        region_id = f"{params.provider}-{params.region_code}"
+        region_id = f'{params["provider"]}-{params["region_code"]}'
 
-        params_data = params.dict()
-        params_data["region_id"] = region_id
+        params["region_id"] = region_id
 
-        region_vo = self.region_mgr.create_region(params_data)
-
-        return RegionResponse(**region_vo.to_dict())
+        return self.region_mgr.create_region(params)
 
     @transaction(
         permission="inventory-v2:Region.write",
-        role_types=["DOMAIN_ADMIN"],
+        role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER"],
     )
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @convert_model
     def update(self, params: RegionUpdateRequest) -> Union[RegionResponse, dict]:
         """
         Args:
@@ -97,27 +94,24 @@ class RegionService(BaseService):
             region_vo (object)
         """
 
-        return self.update_resource(params)
-
-    @convert_model
-    def update_resource(
-        self, params: RegionUpdateRequest
-    ) -> Union[RegionResponse, dict]:
-
-        region_vo = self.region_mgr.get_region(
-            params.region_id, params.domain_id, params.workspace_id
-        )
-
-        region_vo = self.region_mgr.update_region_by_vo(
-            params.dict(exclude_unset=True), region_vo
-        )
+        region_vo = self.update_resource(params.dict(exclude_unset=True))
 
         return RegionResponse(**region_vo.to_dict())
 
+    def update_resource(self, params: dict) -> Region:
+
+        region_vo = self.region_mgr.get_region(
+            params["region_id"], params["domain_id"], params.get("workspace_id")
+        )
+
+        return self.region_mgr.update_region_by_vo(params, region_vo)
+
     @transaction(
         permission="inventory-v2:Region.write",
-        role_types=["DOMAIN_ADMIN"],
+        role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER"],
     )
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @convert_model
     def delete(self, params: RegionDeleteRequest) -> None:
         """
         Args:
@@ -130,12 +124,11 @@ class RegionService(BaseService):
             None
         """
 
-        self.delete_resource(params)
+        self.delete_resource(params.dict())
 
-    @convert_model
-    def delete_resource(self, params: RegionDeleteRequest) -> None:
+    def delete_resource(self, params: dict) -> None:
         region_vo = self.region_mgr.get_region(
-            params.region_id, params.domain_id, params.workspace_id
+            params["region_id"], params["domain_id"], params.get("workspace_id")
         )
         self.region_mgr.delete_region_by_vo(region_vo)
 

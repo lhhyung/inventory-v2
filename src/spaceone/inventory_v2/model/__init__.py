@@ -8,4 +8,4 @@ from spaceone.inventory_v2.model.metric.database import Metric
 from spaceone.inventory_v2.model.metric_data.database import MetricData
 from spaceone.inventory_v2.model.metric_example.database import MetricExample
 from spaceone.inventory_v2.model.job.database import Job
-from spaceone.inventory_v2.model.job_task.database import JobTask
+from spaceone.inventory_v2.model.job_task.database import JobTask, JobTaskDetail

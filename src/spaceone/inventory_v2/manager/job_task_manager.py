@@ -1,9 +1,8 @@
-import copy
 import logging
-import json
 from typing import Tuple, Union
 from jsonschema import validate
 from datetime import datetime
+
 from spaceone.core import config, queue, utils
 from spaceone.core.manager import BaseManager
 from spaceone.core.scheduler.task_schema import SPACEONE_TASK_SCHEMA
@@ -11,9 +10,7 @@ from spaceone.core.model.mongo_model import QuerySet
 
 from spaceone.inventory_v2.manager.cleanup_manager import CleanupManager
 from spaceone.inventory_v2.manager.job_manager import JobManager
-
-# from spaceone.inventory.manager.cleanup_manager import CleanupManager
-from spaceone.inventory_v2.model.job_task.database import JobTask
+from spaceone.inventory_v2.model.job_task.database import JobTask, JobTaskDetail
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -22,6 +19,7 @@ class JobTaskManager(BaseManager):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.job_task_model = JobTask
+        self.job_task_detail_model = JobTaskDetail
 
     def create_job_task(self, params: dict) -> JobTask:
         def _rollback(vo: JobTask):
@@ -32,7 +30,21 @@ class JobTaskManager(BaseManager):
         self.transaction.add_rollback(_rollback, job_task_vo)
         return job_task_vo
 
-    def get(
+    def create_job_task_detail(self, job_task_vo: JobTask) -> JobTaskDetail:
+        def _rollback(vo: JobTaskDetail):
+            _LOGGER.info(f"[ROLLBACK] Delete job task detail: {vo.job_task_id}")
+            vo.delete()
+
+        params = {
+            "job_task_id": job_task_vo.job_task_id,
+            "job_id": job_task_vo.job_id,
+        }
+        job_task_detail_vo: JobTaskDetail = self.job_task_detail_model.create(params)
+        self.transaction.add_rollback(_rollback, job_task_vo)
+
+        return job_task_detail_vo
+
+    def get_job_task(
         self,
         job_task_id: str,
         domain_id: str,

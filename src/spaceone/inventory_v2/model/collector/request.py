@@ -64,7 +64,7 @@ class CollectorDeleteRequest(BaseModel):
 
 class CollectorGetRequest(BaseModel):
     collector_id: str
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[list, str, None] = None
     domain_id: str
 
 

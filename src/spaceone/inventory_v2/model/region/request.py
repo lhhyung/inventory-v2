@@ -27,13 +27,13 @@ class RegionUpdateRequest(BaseModel):
     region_id: str
     name: str = None
     tags: Union[dict, None] = None
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[list, str, None] = None
     domain_id: str
 
 
 class RegionDeleteRequest(BaseModel):
     region_id: str
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[list, str, None] = None
     domain_id: str
 
 

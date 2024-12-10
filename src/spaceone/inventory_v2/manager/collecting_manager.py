@@ -1,10 +1,13 @@
+import datetime
 import logging
 import time
+from datetime import datetime
 from typing import Generator
+
 from spaceone.core import utils
 from spaceone.core.manager import BaseManager
+
 from spaceone.inventory_v2.lib.resource_manager import ResourceManager
-from spaceone.inventory_v2.manager.asset_manager import AssetManager
 from spaceone.inventory_v2.manager.job_manager import JobManager
 from spaceone.inventory_v2.manager.job_task_manager import JobTaskManager
 from spaceone.inventory_v2.manager.collector_manager import CollectorManager
@@ -13,8 +16,6 @@ from spaceone.inventory_v2.manager.collector_plugin_manager import (
     CollectorPluginManager,
 )
 
-# from spaceone.inventory.manager.namespace_manager import NamespaceManager
-# from spaceone.inventory.manager.metric_manager import MetricManager
 from spaceone.inventory_v2.model.job_task.database import JobTask
 from spaceone.inventory_v2.error import *
 from spaceone.inventory_v2.lib import rule_matcher
@@ -50,9 +51,6 @@ class CollectingManager(BaseManager):
                 'token': 'str'
             }
         """
-        from spaceone.core import model
-
-        model.init_all(False)
 
         # set token to transaction meta
         token = params["token"]
@@ -71,6 +69,8 @@ class CollectingManager(BaseManager):
         secret_data = params["secret_data"]
         plugin_info = params["plugin_info"]
 
+        print(secret_info)
+
         if is_sub_task:
             _LOGGER.debug(
                 f"[collecting_resources] start sub task: {job_task_id} "
@@ -85,7 +85,7 @@ class CollectingManager(BaseManager):
             self.job_task_mgr.push_job_task(params)
             return True
 
-        job_task_vo = self.job_task_mgr.get(job_task_id, domain_id)
+        job_task_vo = self.job_task_mgr.get_job_task(job_task_id, domain_id)
 
         # add workspace_id to params from secret_info
         params["workspace_id"] = secret_info["workspace_id"]
@@ -233,7 +233,11 @@ class CollectingManager(BaseManager):
             total_count += 1
 
             try:
-                if resource_type in ["inventory.Namespace", "inventory.Metric"]:
+                if resource_type in [
+                    "inventory.NamespaceGroup",
+                    "inventory.Namespace",
+                    "inventory.Metric",
+                ]:
                     # self._upsert_metric_and_namespace(resource_data, params)
                     # total_count -= 1
                     pass
@@ -377,6 +381,7 @@ class CollectingManager(BaseManager):
         request_data = resource_data.get("resource", {})
         request_data["domain_id"] = domain_id
         request_data["workspace_id"] = workspace_id
+        request_data["last_collected_at"] = datetime.utcnow()
 
         service, manager = self._get_resource_map(resource_type)
 
@@ -421,7 +426,11 @@ class CollectingManager(BaseManager):
 
         try:
             match_resource, total_count = self._query_with_match_rules(
-                request_data, match_rules, domain_id, workspace_id, manager
+                request_data,
+                match_rules,
+                domain_id,
+                workspace_id,
+                manager,
             )
 
         except ERROR_TOO_MANY_MATCH as e:
@@ -474,6 +483,7 @@ class CollectingManager(BaseManager):
             additional = self._set_error_addition_info(
                 resource_type, total_count, request_data
             )
+            # todo: refactoring job task error
             self.job_task_mgr.add_error(
                 job_task_vo, e.error_code, e.message, additional
             )
@@ -590,7 +600,10 @@ class CollectingManager(BaseManager):
             query = rule_matcher.make_query(
                 order, match_rules, resource_data, domain_id, workspace_id
             )
+            _LOGGER.debug(f"[_query_with_match_rules] query: {query}")
             match_resource, total_count = resource_manager.find_resources(query)
+
+            _LOGGER.debug(f"[_query_with_match_rules] match_resource: {match_resource}")
 
             if total_count > 1:
                 if data := resource_data.get("data"):

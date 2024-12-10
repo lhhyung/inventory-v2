@@ -614,7 +614,7 @@ class CollectorService(BaseService):
         domain_id: str,
         collector_workspace_id: str = None,
     ) -> list:
-        secret_mgr: SecretManager = self.locator.get_manager(SecretManager)
+        secret_mgr = SecretManager()
         collector_plugin_mgr = CollectorPluginManager()
 
         tasks = []
@@ -629,6 +629,7 @@ class CollectorService(BaseService):
         for secret_id in secret_ids:
             secret_info = secret_mgr.get_secret(secret_id, domain_id)
             secret_data = secret_mgr.get_secret_data(secret_id, domain_id)
+
             _task = {
                 "plugin_info": plugin_info,
                 "secret_info": secret_info,

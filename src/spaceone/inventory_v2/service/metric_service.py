@@ -283,6 +283,7 @@ class MetricService(BaseService):
         permission="inventory-v2:Metric.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
+    @change_value_by_rule("APPEND", "workspace_id", "*")
     @append_query_filter(["workspace_id", "domain_id"])
     @append_keyword_filter(["metric_id", "name"])
     @convert_model

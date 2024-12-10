@@ -83,5 +83,5 @@ class MetricSearchQueryRequest(BaseModel):
 
 class MetricStatQueryRequest(BaseModel):
     query: dict
-    workspace_id: Union[str, list, None] = None
+    workspace_id: Union[list, str, None] = None
     domain_id: str

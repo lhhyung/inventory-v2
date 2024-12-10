@@ -21,28 +21,6 @@ class IdentityManager(BaseManager):
             token=token,
         )
 
-    def get_user(self, domain_id: str, user_id: str) -> dict:
-        system_token = config.get_global("TOKEN")
-        response = self.identity_conn.dispatch(
-            "User.list",
-            {"user_id": user_id, "state": "ENABLED"},
-            x_domain_id=domain_id,
-            token=system_token,
-        )
-        users_info = response.get("results", [])
-        if users_info:
-            return users_info[0]
-        else:
-            return {}
-
-    def get_domain_name(self, domain_id: str) -> str:
-        system_token = config.get_global("TOKEN")
-
-        domain_info = self.identity_conn.dispatch(
-            "Domain.get", {"domain_id": domain_id}, token=system_token
-        )
-        return domain_info["name"]
-
     def list_domains(self, params: dict) -> dict:
         system_token = config.get_global("TOKEN")
         return self.identity_conn.dispatch("Domain.list", params, token=system_token)
@@ -107,6 +85,24 @@ class IdentityManager(BaseManager):
             )
         return service_account_name_map
 
+    @cache.cacheable(
+        key="inventory:service-account:{domain_id}:{service_account_id}", expire=300
+    )
+    def get_service_account(self, service_account_id: str, domain_id: str) -> dict:
+        token = self.transaction.get_meta("token")
+        token_type = JWTUtil.get_value_from_token(token, "typ")
+
+        if token_type == "SYSTEM_TOKEN":
+            return self.identity_conn.dispatch(
+                "ServiceAccount.get",
+                {"service_account_id": service_account_id},
+                x_domain_id=domain_id,
+            )
+        else:
+            return self.identity_conn.dispatch(
+                "ServiceAccount.get", {"service_account": service_account_id}
+            )
+
     def list_service_accounts(self, query: dict, domain_id: str) -> dict:
         if self.token_type == "SYSTEM_TOKEN":
             return self.identity_conn.dispatch(
@@ -115,10 +111,16 @@ class IdentityManager(BaseManager):
         else:
             return self.identity_conn.dispatch("ServiceAccount.list", {"query": query})
 
-    def get_project(self, project_id: str, domain_id: str):
-        if self.token_type == "SYSTEM_TOKEN":
+    @cache.cacheable(key="inventory:project:{domain_id}:{project_id}", expire=3600)
+    def get_project(self, project_id, domain_id) -> dict:
+        token = self.transaction.get_meta("token")
+        token_type = JWTUtil.get_value_from_token(token, "typ")
+
+        if token_type == "SYSTEM_TOKEN":
             return self.identity_conn.dispatch(
-                "Project.get", {"project_id": project_id}, x_domain_id=domain_id
+                "Project.get",
+                {"project_id": project_id},
+                x_domain_id=domain_id,
             )
         else:
             return self.identity_conn.dispatch(

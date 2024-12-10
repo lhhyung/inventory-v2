@@ -22,9 +22,9 @@ _KEYWORD_FILTER = [
     "asset_id",
     "name",
     "ip_addresses",
-    "cloud_service_group",
-    "cloud_service_type",
-    "reference.resource_id",
+    "asset_type_id",
+    "region_id",
+    "resource_id",
 ]
 
 _LOGGER = logging.getLogger(__name__)
@@ -58,18 +58,14 @@ class AssetService(BaseService):
         """
         Args:
             params (dict): {
-                'cloud_service_type': 'str',        # required
-                'cloud_service_group': 'str',       # required
+                'asset_id': 'str',        # required
                 'provider': 'str',                  # required
                 'name': 'str',
                 'account': 'str',
-                'instance_type': 'str',
-                'instance_size': 'float',
                 'ip_addresses': 'list',
                 'data': 'dict',                     # required
                 'json_data': 'dict',
                 'metadata': 'dict',
-                'reference': 'dict',
                 'tags': 'list or dict',
                 'region_code': 'str',
                 'project_id': 'str',                # required
@@ -110,7 +106,9 @@ class AssetService(BaseService):
 
         domain_id = params["domain_id"]
         workspace_id = params["workspace_id"]
+
         secret_project_id = self.transaction.get_meta("secret.project_id")
+
         provider = params["provider"]
 
         if instance_size := params.get("instance_size"):
@@ -136,17 +134,12 @@ class AssetService(BaseService):
         elif secret_project_id:
             params["project_id"] = secret_project_id
 
-        # params["ref_cloud_service_type"] = self._make_cloud_service_type_key(params)
-
-        if "region_id" in params:
-            params["ref_region"] = self._make_region_key(
-                domain_id, provider, params["region_code"]
+        if "service_account_id" in params:
+            self.identity_mgr.get_service_account(
+                params["service_account_id"], domain_id
             )
 
-        if "metadata" in params:
-            params["metadata"] = self._convert_metadata(params["metadata"], provider)
-
-        params["collection_info"] = self._get_collection_info()
+        params = self._set_metadata_info_from_transaction(params)
 
         asset_vo = self.asset_mgr.create_asset(params)
 
@@ -226,10 +219,6 @@ class AssetService(BaseService):
         if "ip_addresses" in params and params["ip_addresses"] is None:
             del params["ip_addresses"]
 
-        if instance_size := params.get("instance_size"):
-            if not isinstance(instance_size, float):
-                raise ERROR_INVALID_PARAMETER_TYPE(key="instance_size", type="float")
-
         if "tags" in params:
             params["tags"] = self._convert_tags_to_dict(params["tags"])
 
@@ -282,7 +271,7 @@ class AssetService(BaseService):
             else:
                 del params["metadata"]
 
-        params["collection_info"] = self._get_collection_info()
+        params = self._set_metadata_info_from_transaction(params)
 
         params = self.asset_mgr.merge_data(params, old_asset_data)
 
@@ -392,13 +381,6 @@ class AssetService(BaseService):
         )
 
     @staticmethod
-    def _make_cloud_service_type_key(resource_data: dict) -> str:
-        return (
-            f'{resource_data["domain_id"]}.{resource_data["workspace_id"]}.{resource_data["provider"]}.'
-            f'{resource_data["cloud_service_group"]}.{resource_data["cloud_service_type"]}'
-        )
-
-    @staticmethod
     def _make_region_key(domain_id: str, provider: str, region_code: str) -> str:
         return f"{domain_id}.{provider}.{region_code}"
 
@@ -406,17 +388,20 @@ class AssetService(BaseService):
     def _convert_metadata(metadata: dict, provider: str) -> dict:
         return {provider: copy.deepcopy(metadata)}
 
-    def _get_collection_info(self) -> dict:
+    def _set_metadata_info_from_transaction(self, params: dict) -> dict:
         collector_id = self.transaction.get_meta("collector_id")
         secret_id = self.transaction.get_meta("secret.secret_id")
         service_account_id = self.transaction.get_meta("secret.service_account_id")
 
-        return {
-            "collector_id": collector_id,
-            "secret_id": secret_id,
-            "service_account_id": service_account_id,
-            "last_collected_at": datetime.utcnow(),
-        }
+        params.update(
+            {
+                "collector_id": collector_id,
+                "secret_id": secret_id,
+                "service_account_id": service_account_id,
+            }
+        )
+
+        return params
 
     @staticmethod
     def _convert_tags_to_dict(tags: Union[list, dict]) -> dict:

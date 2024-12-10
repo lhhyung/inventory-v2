@@ -36,10 +36,14 @@ def dict_key_int_parser(data: dict) -> dict:
 def make_query(
     key: str, rules: dict, resource: dict, domain_id: str, workspace_id: str
 ) -> dict:
-    _filter = [
-        {"k": "domain_id", "v": domain_id, "o": "eq"},
-        {"k": "workspace_id", "v": workspace_id, "o": "eq"},
-    ]
+    resource_type = resource.get("resource_type")
+    _filter = [{"k": "domain_id", "v": domain_id, "o": "eq"}]
+
+    if resource_type in ["inventory.Asset"]:
+        _filter.append({"k": "workspace_id", "v": workspace_id, "o": "eq"})
+    else:
+        workspaces = list({workspace_id, "*"})
+        _filter.append({"k": "workspace_id", "v": workspaces, "o": "in"})
 
     for rule in rules[key]:
         value = find_data(resource, rule)

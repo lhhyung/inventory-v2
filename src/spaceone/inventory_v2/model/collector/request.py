@@ -71,7 +71,7 @@ class CollectorGetRequest(BaseModel):
 class CollectorSearchQueryRequest(BaseModel):
     query: Union[dict, None] = None
     collector_id: Union[str, None] = None
-    workspace_id: Union[str, list, None] = None
+    workspace_id: Union[list, str, None] = None
     domain_id: str
 
 

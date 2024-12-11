@@ -2,10 +2,61 @@ from mongoengine import *
 from datetime import datetime
 
 from spaceone.core.model.mongo_model import MongoModel
-from spaceone.inventory_v2.model.asset_type.database import AssetType
-
 from spaceone.inventory_v2.error.asset import ERROR_RESOURCE_ALREADY_DELETED
-from spaceone.inventory_v2.model.region.database import Region
+
+
+class HistoryDiff(EmbeddedDocument):
+    key = StringField(required=True)
+    before = DynamicField(default=None, null=True)
+    after = DynamicField(default=None, null=True)
+    type = StringField(
+        max_length=20, choices=("ADDED", "CHANGED", "DELETED"), required=True
+    )
+
+    def to_dict(self):
+        return dict(self.to_mongo())
+
+
+class History(MongoModel):
+    history_id = StringField(max_length=40, generate_id="history", unique=True)
+    asset_id = StringField(max_length=40, required=True)
+    action = StringField(
+        max_length=20, choices=("CREATE", "UPDATE", "DELETE"), required=True
+    )
+    diff = ListField(EmbeddedDocumentField(HistoryDiff), default=[])
+    diff_count = IntField(default=0)
+    updated_by = StringField(max_length=40, choices=("COLLECTOR", "USER"))
+    collector_id = StringField(max_length=40, default=None, null=True)
+    job_id = StringField(max_length=40, default=None, null=True)
+    user_id = StringField(max_length=255, default=None, null=True)
+    project_id = StringField(max_length=40)
+    workspace_id = StringField(max_length=40)
+    domain_id = StringField(max_length=40)
+    created_at = DateTimeField(auto_now=True)
+
+    meta = {
+        "minimal_fields": [
+            "history_id",
+            "action",
+            "diff_count",
+            "asset_id",
+            "updated_by",
+            "user_id",
+            "collector_id",
+            "job_id",
+        ],
+        "ordering": ["-created_at"],
+        "indexes": [
+            {
+                "fields": ["domain_id", "asset_id", "-created_at", "diff.key"],
+                "name": "COMPOUND_INDEX_FOR_SEARCH",
+            },
+            {"fields": ["domain_id", "history_id"], "name": "COMPOUND_INDEX_FOR_GET"},
+            "collector_id",
+            "job_id",
+            "domain_id",
+        ],
+    }
 
 
 class Asset(MongoModel):

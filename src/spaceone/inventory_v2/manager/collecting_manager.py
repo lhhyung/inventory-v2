@@ -69,8 +69,6 @@ class CollectingManager(BaseManager):
         secret_data = params["secret_data"]
         plugin_info = params["plugin_info"]
 
-        print(secret_info)
-
         if is_sub_task:
             _LOGGER.debug(
                 f"[collecting_resources] start sub task: {job_task_id} "

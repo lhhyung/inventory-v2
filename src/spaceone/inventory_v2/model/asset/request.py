@@ -6,7 +6,10 @@ __all__ = [
     "AssetUpdateRequest",
     "AssetGetRequest",
     "AssetSearchQueryRequest",
+    "AssetHistorySearchQueryRequest",
 ]
+
+Action = Literal["CREATE", "UPDATE", "DELETE"]
 
 
 class AssetCreateRequest(BaseModel):
@@ -53,6 +56,19 @@ class AssetGetRequest(BaseModel):
 
 class AssetSearchQueryRequest(BaseModel):
     query: Union[dict, None] = None
-    user_projects: List[str]
+    user_projects: Union[List[str], None] = None
     workspace_id: Union[str, None] = None
     domain_id: str
+
+
+class AssetHistorySearchQueryRequest(BaseModel):
+    query: Union[dict, None] = None
+    history_id: Union[str, None] = None
+    asset_id: str
+    action: Union[Action, None] = None
+    user_id: Union[str, None] = None
+    collector_id: Union[str, None] = None
+    job_id: Union[str, None] = None
+    workspace_id: Union[str, None] = None
+    domain_id: str
+    user_projects: Union[List[str], None] = None

@@ -25,15 +25,15 @@ class RegionCreateRequest(BaseModel):
 
 class RegionUpdateRequest(BaseModel):
     region_id: str
-    name: str = None
+    name: Union[str, None] = None
     tags: Union[dict, None] = None
-    workspace_id: Union[list, str, None] = None
+    workspace_id: Union[str, None] = None
     domain_id: str
 
 
 class RegionDeleteRequest(BaseModel):
     region_id: str
-    workspace_id: Union[list, str, None] = None
+    workspace_id: Union[str, None] = None
     domain_id: str
 
 

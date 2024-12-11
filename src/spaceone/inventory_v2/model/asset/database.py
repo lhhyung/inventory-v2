@@ -5,7 +5,7 @@ from spaceone.core.model.mongo_model import MongoModel
 from spaceone.inventory_v2.model.asset_type.database import AssetType
 
 from spaceone.inventory_v2.error.asset import ERROR_RESOURCE_ALREADY_DELETED
-from spaceone.inventory_v2.model.region.region_model import Region
+from spaceone.inventory_v2.model.region.database import Region
 
 
 class Asset(MongoModel):

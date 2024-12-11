@@ -317,7 +317,6 @@ class CollectorService(BaseService):
         permission="inventory-v2:Collector.write",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER"],
     )
-    @check_required(["collector_id", "domain_id"])
     @convert_model
     def delete(self, params: CollectorDeleteRequest) -> None:
         """Delete collector
@@ -389,7 +388,6 @@ class CollectorService(BaseService):
         permission="inventory-v2:Collector.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
-    @check_required(["domain_id"])
     @append_query_filter(
         [
             "collector_id",

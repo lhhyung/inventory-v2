@@ -1,10 +1,14 @@
 import logging
-from typing import Tuple
+from typing import Union
+
+from spaceone.core.error import *
 from spaceone.core.service import *
-from spaceone.core import utils
-from spaceone.core.model.mongo_model import QuerySet
+
 from spaceone.inventory_v2.manager.region_manager import RegionManager
-from spaceone.inventory_v2.model.region.region_model import Region
+from spaceone.inventory_v2.manager.identity_manager import IdentityManager
+from spaceone.inventory_v2.model.region.request import *
+from spaceone.inventory_v2.model.region.response import *
+from spaceone.inventory_v2.model.region.database import Region
 
 _LOGGER = logging.getLogger(__name__)
 _KEYWORD_FILTER = ["region_id", "name", "region_code"]
@@ -19,104 +23,122 @@ class RegionService(BaseService):
 
     def __init__(self, metadata):
         super().__init__(metadata)
-        self.region_mgr: RegionManager = self.locator.get_manager("RegionManager")
+        self.region_mgr = RegionManager()
 
     @transaction(
-        permission="inventory:Region.write",
-        role_types=["DOMAIN_ADMIN"],
+        permission="inventory-v2:Region.write",
+        role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER"],
     )
-    def create(self, params: dict) -> Region:
+    @convert_model
+    def create(self, params: RegionCreateRequest) -> Union[RegionResponse, dict]:
         """
         Args:
         params (dict): {
-            'name': 'str',          # required
-            'region_code': 'str',   # required
-            'provider': 'str',      # required
+            'name': 'str',              # required
+            'region_code': 'str',       # required
+            'provider': 'str',          # required
             'tags': 'dict',
-            'domain_id': 'str',     # injected from auth (required)
+            'resource_group': 'str',    # required
+            'workspace_id': 'str',      # injected from auth
+            'domain_id': 'str',         # injected from auth (required)
         }
         Returns:
-            region_vo (object)
+            RegionResponse:
         """
+        region_vo = self.create_resource(params.dict())
 
-        return self.create_resource(params)
+        return RegionResponse(**region_vo.to_dict())
 
-    @check_required(["name", "region_code", "provider", "domain_id"])
     def create_resource(self, params: dict) -> Region:
-        if "tags" in params:
-            if isinstance(params["tags"], list):
-                params["tags"] = utils.tags_to_dict(params["tags"])
 
         domain_id = params["domain_id"]
+        workspace_id = params.get("workspace_id")
+        resource_group = params["resource_group"]
 
-        params["updated_by"] = self.transaction.get_meta("collector_id") or "manual"
-        params["region_key"] = f'{params["provider"]}.{params["region_code"]}'
-        # params["ref_region"] = f'{domain_id}.{workspace_id}.{params["region_key"]}'
+        # Check permission by resource group
+        if resource_group == "WORKSPACE":
+            if workspace_id is None:
+                raise ERROR_REQUIRED_PARAMETER(key="workspace_id")
+
+            identity_mgr = IdentityManager()
+            identity_mgr.check_workspace(workspace_id, domain_id)
+        else:
+            params["workspace_id"] = "*"
+
+        region_id = f'{params["provider"]}-{params["region_code"]}'
+
+        params["region_id"] = region_id
 
         return self.region_mgr.create_region(params)
 
     @transaction(
-        permission="inventory:Region.write",
-        role_types=["DOMAIN_ADMIN"],
+        permission="inventory-v2:Region.write",
+        role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER"],
     )
-    def update(self, params: dict) -> Region:
+    @convert_model
+    def update(self, params: RegionUpdateRequest) -> Union[RegionResponse, dict]:
         """
         Args:
         params (dict): {
             'region_id': 'str',     # required
             'name': 'str',
             'tags': 'dict',
+            'workspace_id': 'str',  # injected from auth
             'domain_id': 'str',     # injected from auth (required)
         }
         Returns:
             region_vo (object)
         """
 
-        return self.update_resource(params)
+        region_vo = self.update_resource(params.dict(exclude_unset=True))
 
-    @check_required(["region_id", "domain_id"])
+        return RegionResponse(**region_vo.to_dict())
+
     def update_resource(self, params: dict) -> Region:
-        if "tags" in params:
-            if isinstance(params["tags"], list):
-                params["tags"] = utils.tags_to_dict(params["tags"])
 
-        params["updated_by"] = self.transaction.get_meta("collector_id") or "manual"
+        region_vo = self.region_mgr.get_region(
+            params["region_id"], params["domain_id"], params.get("workspace_id")
+        )
 
-        region_vo = self.region_mgr.get_region(params["region_id"], params["domain_id"])
         return self.region_mgr.update_region_by_vo(params, region_vo)
 
     @transaction(
-        permission="inventory:Region.write",
-        role_types=["DOMAIN_ADMIN"],
+        permission="inventory-v2:Region.write",
+        role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER"],
     )
-    def delete(self, params: dict) -> None:
+    @convert_model
+    def delete(self, params: RegionDeleteRequest) -> None:
         """
         Args:
         params (dict): {
             'region_id': 'str',     # required
+            'workspace_id': 'str',  # injected from auth
             'domain_id': 'str'      # injected from auth (required)
         }
         Returns:
             None
         """
 
-        self.delete_resource(params)
+        self.delete_resource(params.dict())
 
-    @check_required(["region_id", "domain_id"])
     def delete_resource(self, params: dict) -> None:
-        region_vo = self.region_mgr.get_region(params["region_id"], params["domain_id"])
+        region_vo = self.region_mgr.get_region(
+            params["region_id"], params["domain_id"], params.get("workspace_id")
+        )
         self.region_mgr.delete_region_by_vo(region_vo)
 
     @transaction(
-        permission="inventory:Region.read",
+        permission="inventory-v2:Region.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
-    @check_required(["region_id", "domain_id"])
-    def get(self, params: dict) -> Region:
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @convert_model
+    def get(self, params: RegionGetRequest) -> Union[RegionResponse, dict]:
         """
         Args:
             params (dict): {
                 'region_id': 'str',     # required
+                'workspace_id': 'str',  # injected from auth
                 'domain_id': 'str',     # injected from auth (required)
             }
 
@@ -125,34 +147,41 @@ class RegionService(BaseService):
 
         """
 
-        return self.region_mgr.get_region(params["region_id"], params["domain_id"])
+        region_vo = self.region_mgr.get_region(
+            params.region_id, params.domain_id, params.workspace_id
+        )
+
+        return RegionResponse(**region_vo.to_dict())
 
     @transaction(
-        permission="inventory:Region.read",
+        permission="inventory-v2:Region.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
-    @check_required(["domain_id"])
     @append_query_filter(
         [
             "region_id",
             "name",
-            "region_key",
             "region_code",
             "provider",
+            "exists_only",
+            "workspace_id",
             "domain_id",
         ]
     )
     @append_keyword_filter(_KEYWORD_FILTER)
-    def list(self, params: dict) -> Tuple[QuerySet, int]:
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @convert_model
+    def list(self, params: RegionSearchQueryRequest) -> Union[RegionsResponse, dict]:
         """
         Args:
             params (dict): {
                 'query': 'dict (spaceone.api.core.v1.Query)',
                 'region_id': 'str',
                 'name': 'str',
-                'region_key': 'str',
                 'region_code': 'str',
                 'provider': 'str',
+                'exists_only': 'bool',
+                'workspace_id': 'str',      # injected from auth
                 'domain_id': 'str',         # injected from auth (required)
             }
 
@@ -162,16 +191,22 @@ class RegionService(BaseService):
 
         """
 
-        return self.region_mgr.list_regions(params.get("query", {}))
+        query = params.query or {}
+        region_vos, total_count = self.region_mgr.list_regions(query=query)
+
+        regions_info = [region_vo.to_dict() for region_vo in region_vos]
+
+        return RegionsResponse(results=regions_info, total_count=total_count)
 
     @transaction(
-        permission="inventory:Region.read",
+        permission="inventory-v2:Region.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
-    @check_required(["query", "domain_id"])
-    @append_query_filter(["domain_id"])
+    @append_query_filter(["workspace_id", "domain_id"])
     @append_keyword_filter(_KEYWORD_FILTER)
-    def stat(self, params: dict) -> dict:
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @convert_model
+    def stat(self, params: RegionStatQueryRequest) -> dict:
         """
         Args:
             params (dict): {
@@ -184,5 +219,5 @@ class RegionService(BaseService):
 
         """
 
-        query = params.get("query", {})
+        query = params.query or {}
         return self.region_mgr.stat_regions(query)

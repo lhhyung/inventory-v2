@@ -34,7 +34,6 @@ class RegionService(BaseService):
         """
         Args:
         params (dict): {
-            'region_id': 'str,
             'name': 'str',              # required
             'region_code': 'str',       # required
             'provider': 'str',          # required
@@ -48,12 +47,9 @@ class RegionService(BaseService):
         """
         region_vo = self.create_resource(params.dict())
 
-        # return self.create_resource(params)
         return RegionResponse(**region_vo.to_dict())
 
     def create_resource(self, params: dict) -> Region:
-
-        identity_mgr = IdentityManager()
 
         domain_id = params["domain_id"]
         workspace_id = params.get("workspace_id")
@@ -64,6 +60,7 @@ class RegionService(BaseService):
             if workspace_id is None:
                 raise ERROR_REQUIRED_PARAMETER(key="workspace_id")
 
+            identity_mgr = IdentityManager()
             identity_mgr.check_workspace(workspace_id, domain_id)
         else:
             params["workspace_id"] = "*"
@@ -78,7 +75,6 @@ class RegionService(BaseService):
         permission="inventory-v2:Region.write",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER"],
     )
-    @change_value_by_rule("APPEND", "workspace_id", "*")
     @convert_model
     def update(self, params: RegionUpdateRequest) -> Union[RegionResponse, dict]:
         """
@@ -110,7 +106,6 @@ class RegionService(BaseService):
         permission="inventory-v2:Region.write",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER"],
     )
-    @change_value_by_rule("APPEND", "workspace_id", "*")
     @convert_model
     def delete(self, params: RegionDeleteRequest) -> None:
         """

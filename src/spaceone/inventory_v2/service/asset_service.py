@@ -374,9 +374,6 @@ class AssetService(BaseService):
         )
 
         assets_info = [asset_vo.to_dict() for asset_vo in asset_vos]
-
-        for asset_info in assets_info:
-            print(asset_info)
         return AssetsResponse(results=assets_info, total_count=total_count)
 
     @transaction(

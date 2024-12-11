@@ -87,7 +87,10 @@ class CollectorPluginV1Connector(BaseCollectorPluginConnector):
         if _resource := resource_data.get("resource"):
             resource_type = resource_data.get("resource_type")
             if resource_type == "inventory.Region":
-                pass
+                _resource["region_id"] = (
+                    f"{_resource['provider']}-{_resource['region_code']}"
+                )
+
             elif resource_type == "inventory.Metric":
                 metric_resource_type = _resource.get("resource_type")
                 _resource["resource_type"] = metric_resource_type.replace(

@@ -11,7 +11,7 @@ from spaceone.core import utils
 
 from spaceone.inventory_v2.lib.resource_manager import ResourceManager
 from spaceone.inventory_v2.manager.identity_manager import IdentityManager
-from spaceone.inventory_v2.model.asset.database import Asset
+from spaceone.inventory_v2.model.asset.database import Asset, History
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -45,6 +45,7 @@ class AssetManager(BaseManager, ResourceManager):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.asset_model = Asset
+        self.asset_history_model = History
 
     def create_asset(self, params: dict) -> Asset:
         def _rollback(vo: Asset):
@@ -77,11 +78,11 @@ class AssetManager(BaseManager, ResourceManager):
         asset_vo.delete()
 
     def get_asset(
-        self,
-        asset_id: str,
-        domain_id: str,
-        workspace_id: str = None,
-        user_projects: list = None,
+            self,
+            asset_id: str,
+            domain_id: str,
+            workspace_id: str = None,
+            user_projects: list = None,
     ):
         conditions = {"asset_id": asset_id, "domain_id": domain_id}
 
@@ -94,12 +95,12 @@ class AssetManager(BaseManager, ResourceManager):
         return self.asset_model.get(**conditions)
 
     def list_assets(
-        self,
-        query: dict,
-        target: str = None,
-        change_filter: bool = False,
-        domain_id: str = None,
-        reference_filter: dict = None,
+            self,
+            query: dict,
+            target: str = None,
+            change_filter: bool = False,
+            domain_id: str = None,
+            reference_filter: dict = None,
     ) -> Tuple[QuerySet, int]:
         if change_filter:
             query = self._change_filter_tags(query)
@@ -115,12 +116,12 @@ class AssetManager(BaseManager, ResourceManager):
         )
 
     def analyze_assets(
-        self,
-        query: dict,
-        change_filter: bool = False,
-        domain_id: str = None,
-        reference_filter: dict = None,
-    ):
+            self,
+            query: dict,
+            change_filter: bool = False,
+            domain_id: str = None,
+            reference_filter: dict = None,
+    ) -> dict:
         if change_filter:
             query = self._change_filter_tags(query)
             query = self._change_filter_project_group_id(query, domain_id)
@@ -129,6 +130,9 @@ class AssetManager(BaseManager, ResourceManager):
             query = self._append_state_query(query)
 
         return self.asset_model.analyze(**query, reference_filter=reference_filter)
+
+    def list_histories(self, query: dict) -> Tuple[QuerySet, int]:
+        return self.asset_history_model.query(**query)
 
     def _change_filter_tags(self, query: dict) -> dict:
         change_filter = []

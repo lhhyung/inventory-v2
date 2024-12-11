@@ -1,4 +1,6 @@
 from spaceone.core.pygrpc.server import GRPCServer
+
+from .asset import Asset
 from .region import Region
 from .collector import Collector
 from .job import Job
@@ -22,3 +24,4 @@ app.add_service(JobTask)
 app.add_service(Metric)
 app.add_service(MetricData)
 app.add_service(MetricExample)
+app.add_service(Asset)

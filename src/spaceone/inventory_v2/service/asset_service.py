@@ -12,6 +12,7 @@ from spaceone.inventory_v2.manager.collection_state_manager import (
     CollectionStateManager,
 )
 from spaceone.inventory_v2.manager.collector_rule_manager import CollectorRuleManager
+from spaceone.inventory_v2.manager.history_manager import HistoryManager
 from spaceone.inventory_v2.manager.identity_manager import IdentityManager
 from spaceone.inventory_v2.model.asset.database import Asset
 from spaceone.inventory_v2.model.asset.request import *
@@ -35,7 +36,7 @@ _LOGGER = logging.getLogger(__name__)
 @mutation_handler
 @event_handler
 class AssetService(BaseService):
-    resource = "AssetType"
+    resource = "Asset"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -82,7 +83,7 @@ class AssetService(BaseService):
         return AssetResponse(**asset_vo.to_dict())
 
     def create_resource(self, params: dict) -> Asset:
-        # ch_mgr: ChangeHistoryManager = self.locator.get_manager("ChangeHistoryManager")
+        history_mgr = HistoryManager()
 
         if json_data := params.get("json_data"):
             params["data"] = utils.load_json(json_data)
@@ -105,15 +106,9 @@ class AssetService(BaseService):
             del params["json_metadata"]
 
         domain_id = params["domain_id"]
-        workspace_id = params["workspace_id"]
-
-        secret_project_id = self.transaction.get_meta("secret.project_id")
-
         provider = params["provider"]
 
-        if instance_size := params.get("instance_size"):
-            if not isinstance(instance_size, float):
-                raise ERROR_INVALID_PARAMETER_TYPE(key="instance_size", type="float")
+        secret_project_id = self.transaction.get_meta("secret.project_id")
 
         if "tags" in params:
             params["tags"] = self._convert_tags_to_dict(params["tags"])
@@ -143,9 +138,8 @@ class AssetService(BaseService):
 
         asset_vo = self.asset_mgr.create_asset(params)
 
-        # todo: Create New History
         # Create New History
-        # ch_mgr.add_new_history(asset_vo, params)
+        history_mgr.add_new_history(asset_vo, params)
 
         # Create Collection State
         self.state_mgr.create_collection_state(asset_vo.asset_id, domain_id)
@@ -188,7 +182,7 @@ class AssetService(BaseService):
 
     @check_required(["asset_id", "workspace_id", "domain_id"])
     def update_resource(self, params: dict) -> Asset:
-        # ch_mgr: ChangeHistoryManager = self.locator.get_manager("ChangeHistoryManager")
+        history_mgr = HistoryManager()
 
         if json_data := params.get("json_data"):
             params["data"] = utils.load_json(json_data)
@@ -277,9 +271,8 @@ class AssetService(BaseService):
 
         asset_vo = self.asset_mgr.update_asset_by_vo(params, asset_vo)
 
-        # todo: Create Update History
         # Create Update History
-        # ch_mgr.add_update_history(asset_vo, params, old_asset_data)
+        history_mgr.add_update_history(asset_vo, params, old_asset_data)
 
         # Update Collection History
         state_vo = self.state_mgr.get_collection_state(asset_id, domain_id)
@@ -341,7 +334,7 @@ class AssetService(BaseService):
     @append_keyword_filter(_KEYWORD_FILTER)
     @set_query_page_limit(1000)
     @convert_model
-    def list(self, params: AssetSearchQueryRequest):
+    def list(self, params: AssetSearchQueryRequest) -> Union[AssetsResponse, dict]:
         """
         Args:
             params (dict): {
@@ -373,12 +366,70 @@ class AssetService(BaseService):
         query = params.query or {}
         reference_filter = {"domain_id": domain_id, "workspace_id": workspace_id}
 
-        return self.asset_mgr.list_assets(
+        asset_vos, total_count = self.asset_mgr.list_assets(
             query,
             change_filter=True,
             domain_id=domain_id,
             reference_filter=reference_filter,
         )
+
+        assets_info = [asset_vo.to_dict() for asset_vo in asset_vos]
+        return AssetsResponse(results=assets_info, total_count=total_count)
+
+    @transaction(
+        permission="inventory-v2:Asset.read",
+        role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
+    )
+    @append_query_filter(
+        [
+            "asset_id",
+            "history_id",
+            "action",
+            "user_id",
+            "collector_id",
+            "job_id",
+            "updated_by",
+            "domain_id",
+        ]
+    )
+    @append_keyword_filter(["diff.key", "diff.before", "diff.after"])
+    @convert_model
+    def history(
+        self, params: AssetHistorySearchQueryRequest
+    ) -> Union[AssetHistoriesResponse, dict]:
+        """
+        Args:
+            params (dict): {
+                    'query': 'dict (spaceone.api.core.v1.Query)',
+                    'asset_id': 'str',      # required
+                    'history_id': 'str',
+                    'action': 'str',
+                    'user_id': 'dict',
+                    'collector_id': 'str',
+                    'job_id': 'str',
+                    'updated_by': 'str',
+                    'workspace_id': 'str',          # injected from auth
+                    'domain_id  ': 'str',           # injected from auth # required
+                    'user_projects': 'list',        # injected from auth
+                }
+
+        Returns:
+            results (list)
+            total_count (int)
+        """
+
+        self.asset_mgr.get_asset(
+            params.asset_id,
+            params.domain_id,
+            params.workspace_id,
+            params.user_projects,
+        )
+
+        query = params.query or {}
+        history_vos, total_count = self.asset_mgr.list_histories(query)
+
+        histories_info = [history_vo.to_dict() for history_vo in history_vos]
+        return AssetHistoriesResponse(results=histories_info, total_count=total_count)
 
     @staticmethod
     def _make_region_key(domain_id: str, provider: str, region_code: str) -> str:

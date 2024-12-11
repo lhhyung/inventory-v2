@@ -4,13 +4,14 @@ from typing import Tuple, Union
 from spaceone.core.manager import BaseManager
 from spaceone.core.model.mongo_model import QuerySet
 from spaceone.inventory_v2.model.region.database import Region
+from spaceone.inventory_v2.lib.resource_manager import ResourceManager
 
 __ALL__ = ["RegionManager"]
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class RegionManager(BaseManager):
+class RegionManager(BaseManager, ResourceManager):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.region_model = Region()

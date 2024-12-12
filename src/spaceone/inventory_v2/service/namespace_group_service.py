@@ -117,7 +117,7 @@ class NamespaceGroupService(BaseService):
 
         Args:
             params (dict): {
-                'namespace_id': 'str',          # required
+                'namespace_group_id': 'str',    # required
                 'workspace_id': 'str',          # injected from auth
                 'domain_id': 'str',             # injected from auth (required)
             }
@@ -157,11 +157,15 @@ class NamespaceGroupService(BaseService):
             NamespaceGroupResponse:
         """
 
+
+
         namespace_vo = self.namespace_group_mgr.get_namespace_group(
             namespace_group_id=params.namespace_group_id,
             domain_id=params.domain_id,
             workspace_id = params.workspace_id,
         )
+
+        
 
         return NamespaceGroupResponse(**namespace_vo.to_dict())
 

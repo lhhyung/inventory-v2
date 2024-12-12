@@ -2,6 +2,7 @@ import logging
 from typing import Tuple,List, Optional, Union
 from anyio import Condition
 from mongoengine import QuerySet
+from spaceone.core import utils, cache
 
 from spaceone.core.manager import BaseManager
 from spaceone.inventory_v2.error.error_namespace import *
@@ -20,9 +21,9 @@ class NamespaceManager(BaseManager):
         def _rollback(vo: Namespace):
             _LOGGER.info(f"[ROLLBACK] Delete namespace : {vo.name} ({vo.namespace_id}) ({vo.namespace_group_id})")
             vo.delete()
-        
-        if "namespace_group_id" not in params:
-            raise ERROR_REQUIRED_PARAMETER(key="namespace_group_id")
+
+        if params.get("namespace_id") is None :
+            params["namespace_id"] = utils.generate_id("ns")
 
         namespace_vo: Namespace = self.namespace_model.create(params)
         self.transaction.add_rollback(_rollback, namespace_vo)

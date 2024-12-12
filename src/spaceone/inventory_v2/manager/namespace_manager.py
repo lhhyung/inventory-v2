@@ -22,8 +22,7 @@ class NamespaceManager(BaseManager):
             _LOGGER.info(f"[ROLLBACK] Delete namespace : {vo.name} ({vo.namespace_id}) ({vo.namespace_group_id})")
             vo.delete()
         
-        namespace_id = params.get("namespace_id")
-        if namespace_id is None:
+        if namespace_id := params.get("namespace_id"):
             params["namespace_id"] = utils.generate_id("ns")
 
         namespace_vo: Namespace = self.namespace_model.create(params)

@@ -39,14 +39,14 @@ class NamespaceGroupUpdateRequest(BaseModel):
 
 class NamespaceGroupDeleteRequest(BaseModel):
     namespace_group_id: str
-    resource_group: ResourceGroup
+    resource_group: Union[ResourceGroup,None] = None
     workspace_id: Union[str,None] = None
     domain_id:str
 
 
 class NamespaceGroupGetRequest(BaseModel):
     namespace_group_id: str
-    resource_group: ResourceGroup
+    resource_group: Union[ResourceGroup,None] = None
     workspace_id: Union[str,None] = None
     domain_id:str
 

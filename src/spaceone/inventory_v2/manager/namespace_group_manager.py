@@ -30,8 +30,10 @@ class NamespaceGroupManager(BaseManager):
             )
             vo.delete()
 
-        if "namespace_group_id" not in params:
+        namespace_group_id = params.get("namespace_group_id")
+        if namespace_group_id is None:
             params["namespace_group_id"] = utils.generate_id("nsg")
+
         if "is_managed" not in params:
             params["is_managed"] = False
 

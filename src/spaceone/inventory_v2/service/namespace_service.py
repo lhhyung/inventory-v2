@@ -9,6 +9,7 @@ from spaceone.core.error import *
 from spaceone.inventory_v2.model.namespace.request import *
 from spaceone.inventory_v2.model.namespace.response import *
 from spaceone.inventory_v2.manager.namespace_manager import NamespaceManager
+from spaceone.inventory_v2.manager.namespace_group_manager import NamespaceGroupManager
 from spaceone.inventory_v2.manager.identity_manager import IdentityManager
 
 _LOGGER = logging.getLogger(__name__)
@@ -24,6 +25,7 @@ class NamespaceService(BaseService):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.namespace_mgr = NamespaceManager()
+        self.namespace_group_mgr = NamespaceGroupManager()
         self.identity_mgr = IdentityManager()
 
     @transaction(
@@ -63,6 +65,17 @@ class NamespaceService(BaseService):
             self.identity_mgr.check_workspace(workspace_id, domain_id)
         else:
             params.workspace_id = "*"
+
+
+        #exist check namespace_group_id 
+        namespace_group_vo = self.namespace_group_mgr.get_namespace_group(
+            params.namespace_group_id, 
+            domain_id,
+            workspace_id
+        )
+        
+        if namespace_group_vo is None:
+            raise ERROR_NOT_FOUND(key='namespace_group_id', value=params.namespace_group_id)
 
         namespace_vo = self.namespace_mgr.create_namespace(params.dict())
         return NamespaceResponse(**namespace_vo.to_dict())

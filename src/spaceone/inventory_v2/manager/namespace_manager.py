@@ -21,8 +21,8 @@ class NamespaceManager(BaseManager):
         def _rollback(vo: Namespace):
             _LOGGER.info(f"[ROLLBACK] Delete namespace : {vo.name} ({vo.namespace_id}) ({vo.namespace_group_id})")
             vo.delete()
-        
-        if namespace_id := params.get("namespace_id"):
+
+        if params.get("namespace_id") is None or params.get("namespace_id") == "" :
             params["namespace_id"] = utils.generate_id("ns")
 
         namespace_vo: Namespace = self.namespace_model.create(params)

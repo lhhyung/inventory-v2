@@ -174,15 +174,15 @@ class NamespaceGroupService(BaseService):
         permission="inventory-v2:NamespaceGroup.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
+    @change_value_by_rule("APPEND", "workspace_id","*")
     @append_query_filter(
         [
             "namespace_group_id",
-            "is_managed",
+            "workspace_id",
             "domain_id",
         ]
     )
     @append_keyword_filter(["namespace_group_id", "name"])
-    @change_value_by_rule("APPEND", "workspace_id","*")
     @convert_model
     def list(
         self, params: NamespaceGroupSearchQueryRequest
@@ -205,7 +205,7 @@ class NamespaceGroupService(BaseService):
 
         query = params.query or {}
         namespace_group_vos, total_count = self.namespace_group_mgr.list_namespace_groups(
-            query, params.domain_id,
+            query, params.domain_id
         )
 
         namespaces_group_info = [namespace_group_vo.to_dict() for namespace_group_vo in namespace_group_vos]

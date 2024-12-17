@@ -73,7 +73,7 @@ class NamespaceManager(BaseManager):
         return self.namespace_model.filter(**conditions)    
 
     def list_namespaces(self, query: dict, domain_id: str) -> Tuple[QuerySet, int]:
-        # self.create_managed_namespace(domain_id)
+        self.create_managed_namespace(domain_id)
         return self.namespace_model.query(**query)
     
     def stat_namespaces(self, query: dict) -> dict:

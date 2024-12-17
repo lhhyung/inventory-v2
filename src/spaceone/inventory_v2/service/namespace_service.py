@@ -213,7 +213,8 @@ class NamespaceService(BaseService):
 
         query = params.query or {}
         namespace_vos, total_count = self.namespace_mgr.list_namespaces(
-            query
+            query,
+            params.domain_id,
         )
 
         namespaces_info = [namespace_vo.to_dict() for namespace_vo in namespace_vos]

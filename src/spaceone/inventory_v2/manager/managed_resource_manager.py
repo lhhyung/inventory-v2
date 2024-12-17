@@ -7,11 +7,20 @@ from spaceone.core.manager import BaseManager
 
 _LOGGER = logging.getLogger(__name__)
 CURRENT_DIR = os.path.dirname(__file__)
+_NAMESPACE_GROUP_DIR = os.path.join(CURRENT_DIR, "../managed_resource/namespace_group/")
 _NAMESPACE_DIR = os.path.join(CURRENT_DIR, "../managed_resource/namespace/")
 _METRIC_DIR = os.path.join(CURRENT_DIR, "../managed_resource/metric/")
 
 
 class ManagedResourceManager(BaseManager):
+    
+    def get_managed_namespace_groups(self) -> dict:
+        namespace_group_map = {}
+        for namespace_group_info in self._load_managed_resources(_NAMESPACE_GROUP_DIR):
+            namespace_group_map[namespace_group_info["namespace_group_id"]] = namespace_group_info
+
+        return namespace_group_map
+    
     def get_managed_namespaces(self) -> dict:
         namespace_map = {}
         for namespace_info in self._load_managed_resources(_NAMESPACE_DIR):

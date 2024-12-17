@@ -2,6 +2,7 @@ import logging
 from operator import is_
 from re import U
 from typing import Tuple, List, Optional, Union
+
 from fastapi.background import P
 from mongoengine import QuerySet
 from spaceone.core import utils, cache
@@ -13,6 +14,7 @@ from spaceone.inventory_v2.manager.namespace_manager import NamespaceManager
 from spaceone.inventory_v2.model.namespace_group.database import NamespaceGroup
 from spaceone.inventory_v2.model.namespace.database import Namespace
 from spaceone.inventory_v2.model.namespace.response import NamespaceResponse
+from spaceone.inventory_v2.manager.managed_resource_manager import ManagedResourceManager
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -94,12 +96,54 @@ class NamespaceGroupManager(BaseManager):
         return self.namespace_group_model.filter(**conditions)
 
     def list_namespace_groups(self, query: dict, domain_id:str) -> Tuple[QuerySet, int]:
+        self.create_managed_namespace_group(domain_id)
         return self.namespace_group_model.query(**query)
 
     def stat_namespace_groups(self, query: dict) -> dict:
         result = self.namespace_group_model.stat(**query)
         return result if result is not None else {}
 
+
+    # @cache.cacheable(key="inventory-v2:managed-namespace_group:{domain_id}:sync", expire=300)
+    def create_managed_namespace_group(self, domain_id:str) -> bool:
+        managed_resource_mgr = ManagedResourceManager()
+
+        namespace_groups_vo = self.filter_namespace_groups(
+            domain_id=domain_id,
+            is_managed=True,
+        )
+        installed_namespace_groups_version_map = {}
+        
+        for namespace_group_vo in namespace_groups_vo:
+            installed_namespace_groups_version_map[
+                namespace_group_vo.namespace_group_id
+            ] = namespace_group_vo.version
+
+        
+        managed_namespace_groups = managed_resource_mgr.get_managed_namespace_groups()
+        
+        for managed_nsg_id, managed_nsg_info in managed_namespace_groups.items():
+            managed_nsg_info["domain_id"] = domain_id
+            managed_nsg_info["is_managed"] = True
+            managed_nsg_info["resource_group"] = "DOMAIN"
+            managed_nsg_info["workspace_id"] = "*"
+
+            if ns_version := installed_namespace_groups_version_map.get(managed_nsg_id):
+                if ns_version != managed_nsg_info["version"]:
+                    _LOGGER.debug(
+                        f"[_create_managed_namespace_group] update managed namespace: {managed_nsg_id}"
+                    )
+                    namespace_group_vo = self.get_namespace_group(managed_nsg_id, domain_id)
+                    self.update_namespace_group_by_vo(managed_nsg_info, namespace_group_vo)
+            else:
+                _LOGGER.debug(
+                    f"[_create_managed_namespace_group] create new managed namespace: {managed_nsg_id}"
+                )
+                self.create_namespace_group(managed_nsg_info)
+
+        return True
+    
+    
     # def get_namespaces_in_namespace_group(
     #     self, 
     #     namespace_group_id: str,

@@ -1,0 +1,7 @@
+---
+namespace_id: ns-managed-iam-summary
+name: IAM/Summary
+category: IAM
+resource_group: "DOMAIN"
+namespace_group_id: nsg-managed-common
+version: '1.0'

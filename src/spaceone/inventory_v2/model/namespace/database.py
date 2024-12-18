@@ -15,6 +15,7 @@ class Namespace(MongoModel):
     namespace_group_id = StringField(max_length=40)
     workspace_id = StringField(max_length=40)
     domain_id = StringField(max_length=40)
+    version = StringField(max_length=40, default=None, null=True)
     created_at = DateTimeField(auto_now_add=True)
     updated_at = DateTimeField(auto_now=True)
 

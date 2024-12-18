@@ -12,7 +12,7 @@ __all__ = [
 
 
 class MetricExampleCreateRequest(BaseModel):
-    metric_id: Union[str, None] = None
+    metric_id: str
     name: str
     options: dict
     tags: Union[dict, None] = {}

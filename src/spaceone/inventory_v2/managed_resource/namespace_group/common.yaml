@@ -1,0 +1,5 @@
+---
+namespace_group_id: nsg-managed-common
+name: Common
+icon: https://spaceone-custom-assets.s3.ap-northeast-2.amazonaws.com/console-assets/icons/common.yaml
+version: '1.0'

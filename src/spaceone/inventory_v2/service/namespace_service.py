@@ -178,6 +178,7 @@ class NamespaceService(BaseService):
         permission="inventory-v2:Namespace.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
+    @change_value_by_rule("APPEND", "workspace_id","*")
     @append_query_filter(
         [
             "namespace_id",
@@ -185,11 +186,11 @@ class NamespaceService(BaseService):
             "is_managed",
             "resource_type",
             "namespace_group_id",
+            "workspace_id",
             "domain_id",
         ]
     )
     @append_keyword_filter(["namespace_id", "name"])
-    @change_value_by_rule("APPEND", "workspace_id","*")
     @convert_model
     def list(
         self, params: NamespaceSearchQueryRequest
@@ -213,7 +214,8 @@ class NamespaceService(BaseService):
 
         query = params.query or {}
         namespace_vos, total_count = self.namespace_mgr.list_namespaces(
-            query
+            query,
+            params.domain_id,
         )
 
         namespaces_info = [namespace_vo.to_dict() for namespace_vo in namespace_vos]

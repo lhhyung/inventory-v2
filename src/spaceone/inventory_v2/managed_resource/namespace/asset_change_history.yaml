@@ -1,0 +1,7 @@
+---
+namespace_id: ns-managed-asset-change-history
+name: Asset/ChangeHistory
+category: ASSET
+resource_group: "DOMAIN"
+namespace_group_id: nsg-managed-common
+version: '1.0'

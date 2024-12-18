@@ -1,0 +1,7 @@
+---
+namespace_id: ns-managed-asset-summary
+name: Asset/Summary
+category: ASSET
+resource_group: "DOMAIN"
+namespace_group_id: nsg-managed-common
+version: '1.0'

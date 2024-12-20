@@ -1,0 +1,5 @@
+---
+namespace_group_id: nsg-managed-etc
+name: Etc
+icon: https://spaceone-custom-assets.s3.ap-northeast-2.amazonaws.com/console-assets/icons/etc.svg
+version: '1.0'
